@@ -1,0 +1,8 @@
+# CMake specific
+[Bb]uild/
+
+# VS Code specific
+.vscode
+
+# Mac OS specific
+.DS_Store
