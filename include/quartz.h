@@ -53,6 +53,9 @@ typedef enum Quartz_Result_t
 	QUARTZ_INVALID_DEVICE,
 	QUARTZ_INVALID_DEVICE_INDEX,
 
+	// FIXME: add more error codes for wasapi stuff
+	QUARTZ_WASAPI_ERROR,
+
 	QUARTZ_RESULT_ENUM_MAX,
 	QUARTZ_RESULT_ENUM_FORCE32 = 0x7FFFFFFF,
 } Quartz_Result;
@@ -90,9 +93,9 @@ typedef Quartz_Result (*PFN_quartzCreateDevice)(Quartz_Instance instance, uint32
 // TODO: default device
 
 typedef Quartz_Result (*PFN_quartzDestroyInstance)(Quartz_Instance instance);
-typedef Quartz_Result (*PFN_quartzDestroyDevice)(Quartz_Device device);
 
 typedef Quartz_Result (*PFN_quartzGetDeviceInfo)(Quartz_Device device, Quartz_DeviceInfo *info);
+typedef Quartz_Result (*PFN_quartzDestroyDevice)(Quartz_Device device);
 
 typedef struct Quartz_InstanceTable_t
 {
@@ -114,10 +117,11 @@ QUARTZ_APIENTRY Quartz_Result quartzGetInstanceTable(Quartz_Instance instance, Q
 QUARTZ_APIENTRY Quartz_Result quartzGetDeviceTable(Quartz_Device device, Quartz_DeviceTable *device_table);
 
 QUARTZ_APIENTRY Quartz_Result quartzEnumerateDevices(Quartz_Instance instance, uint32_t *device_count, Quartz_DeviceInfo *infos);
-
 QUARTZ_APIENTRY Quartz_Result quartzCreateDevice(Quartz_Instance instance, uint32_t index, Quartz_Device *device);
 
 QUARTZ_APIENTRY Quartz_Result quartzDestroyInstance(Quartz_Instance instance);
+
+QUARTZ_APIENTRY Quartz_Result quartzGetDeviceInfo(Quartz_Device device, Quartz_DeviceInfo *info);
 QUARTZ_APIENTRY Quartz_Result quartzDestroyDevice(Quartz_Device device);
 #endif
 

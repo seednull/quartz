@@ -2,9 +2,13 @@
 
 #include "quartz_internal.h"
 
+#define COBJMACROS
+#include <mmdeviceapi.h>
+
 typedef struct WASAPI_Instance_t
 {
 	Quartz_InstanceTable *vtbl;
+	IMMDeviceEnumerator *enumerator;
 } WASAPI_Instance;
 
 typedef struct WASAPI_Device_t
