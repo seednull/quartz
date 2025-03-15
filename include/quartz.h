@@ -42,6 +42,7 @@ extern "C" {
 // Opaque handles
 QUARTZ_DEFINE_HANDLE(Quartz_Instance);
 QUARTZ_DEFINE_HANDLE(Quartz_Device);
+QUARTZ_DEFINE_HANDLE(Quartz_Buffer);
 
 // Enums
 typedef enum Quartz_Result_t
@@ -52,6 +53,9 @@ typedef enum Quartz_Result_t
 	QUARTZ_INVALID_INSTANCE,
 	QUARTZ_INVALID_DEVICE,
 	QUARTZ_INVALID_DEVICE_INDEX,
+
+	// FIXME: add more error codes for internal errors
+	QUARTZ_INTERNAL_ERROR,
 
 	// FIXME: add more error codes for wasapi stuff
 	QUARTZ_WASAPI_ERROR,
@@ -72,6 +76,15 @@ typedef enum Quartz_Api_t
 	QUARTZ_API_ENUM_FORCE32 = 0x7FFFFFFF,
 } Quartz_Api;
 
+typedef enum Quartz_DeviceType_t
+{
+	QUARTZ_DEVICE_TYPE_PLAYBACK = 0,
+	QUARTZ_DEVICE_TYPE_RECORDING,
+
+	QUARTZ_DEVICE_TYPE_ENUM_MAX,
+	QUARTZ_DEVICE_TYPE_ENUM_FORCE32 = 0x7FFFFFFF,
+} Quartz_DeviceType;
+
 // Structs
 typedef struct Quartz_InstanceDesc_t
 {
@@ -87,27 +100,49 @@ typedef struct Quartz_DeviceInfo_t
 	Quartz_Api api;
 } Quartz_DeviceInfo;
 
+typedef struct Quartz_BufferDesc_t
+{
+	uint32_t sample_rate;
+	uint32_t bit_depth;
+} Quartz_BufferDesc;
+
 // Function pointers
-typedef Quartz_Result (*PFN_quartzEnumerateDevices)(Quartz_Instance instance, uint32_t *device_count, Quartz_DeviceInfo *infos);
-typedef Quartz_Result (*PFN_quartzCreateDevice)(Quartz_Instance instance, uint32_t index, Quartz_Device *device);
-// TODO: default device
+typedef Quartz_Result (*PFN_quartzEnumerateDevices)(Quartz_Instance instance, Quartz_DeviceType type, uint32_t *device_count, Quartz_DeviceInfo *infos);
+typedef Quartz_Result (*PFN_quartzCreateDevice)(Quartz_Instance instance, Quartz_DeviceType type, uint32_t index, Quartz_Device *device);
+typedef Quartz_Result (*PFN_quartzCreateDefaultDevice)(Quartz_Instance instance, Quartz_DeviceType type, Quartz_Device *device);
 
 typedef Quartz_Result (*PFN_quartzDestroyInstance)(Quartz_Instance instance);
 
 typedef Quartz_Result (*PFN_quartzGetDeviceInfo)(Quartz_Device device, Quartz_DeviceInfo *info);
+
+typedef Quartz_Result (*PFN_quartzCreateBuffer)(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);
+
+typedef Quartz_Result (*PFN_quartzDestroyBuffer)(Quartz_Device device, Quartz_Buffer buffer);
 typedef Quartz_Result (*PFN_quartzDestroyDevice)(Quartz_Device device);
+
+typedef Quartz_Result (*PFN_quartzMapBuffer)(Quartz_Device device, Quartz_Buffer buffer, void **ptr);
+typedef Quartz_Result (*PFN_quartzUnmapBuffer)(Quartz_Device device, Quartz_Buffer buffer);
+
 
 typedef struct Quartz_InstanceTable_t
 {
 	PFN_quartzEnumerateDevices enumerateDevices;
 	PFN_quartzCreateDevice createDevice;
+	PFN_quartzCreateDefaultDevice createDefaultDevice;
+
 	PFN_quartzDestroyInstance destroyInstance;
 } Quartz_InstanceTable;
 
 typedef struct Quartz_DeviceTable_t
 {
 	PFN_quartzGetDeviceInfo getDeviceInfo;
+	PFN_quartzCreateBuffer createBuffer;
+
+	PFN_quartzDestroyBuffer destroyBuffer;
 	PFN_quartzDestroyDevice destroyDevice;
+	
+	PFN_quartzMapBuffer mapBuffer;
+	PFN_quartzUnmapBuffer unmapBuffer;
 } Quartz_DeviceTable;
 
 // API
@@ -116,13 +151,21 @@ QUARTZ_APIENTRY Quartz_Result quartzCreateInstance(Quartz_Api api, const Quartz_
 QUARTZ_APIENTRY Quartz_Result quartzGetInstanceTable(Quartz_Instance instance, Quartz_InstanceTable *instance_table);
 QUARTZ_APIENTRY Quartz_Result quartzGetDeviceTable(Quartz_Device device, Quartz_DeviceTable *device_table);
 
-QUARTZ_APIENTRY Quartz_Result quartzEnumerateDevices(Quartz_Instance instance, uint32_t *device_count, Quartz_DeviceInfo *infos);
-QUARTZ_APIENTRY Quartz_Result quartzCreateDevice(Quartz_Instance instance, uint32_t index, Quartz_Device *device);
+QUARTZ_APIENTRY Quartz_Result quartzEnumerateDevices(Quartz_Instance instance, Quartz_DeviceType type, uint32_t *device_count, Quartz_DeviceInfo *infos);
+QUARTZ_APIENTRY Quartz_Result quartzCreateDevice(Quartz_Instance instance, Quartz_DeviceType type, uint32_t index, Quartz_Device *device);
+QUARTZ_APIENTRY Quartz_Result quartzCreateDefaultDevice(Quartz_Instance instance, Quartz_DeviceType type, Quartz_Device *device);
 
 QUARTZ_APIENTRY Quartz_Result quartzDestroyInstance(Quartz_Instance instance);
 
 QUARTZ_APIENTRY Quartz_Result quartzGetDeviceInfo(Quartz_Device device, Quartz_DeviceInfo *info);
+
+QUARTZ_APIENTRY Quartz_Result quartzCreateBuffer(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);
+
+QUARTZ_APIENTRY Quartz_Result quartzDestroyBuffer(Quartz_Device device, Quartz_Buffer buffer);
 QUARTZ_APIENTRY Quartz_Result quartzDestroyDevice(Quartz_Device device);
+
+QUARTZ_APIENTRY Quartz_Result quartzMapBuffer(Quartz_Device device, Quartz_Buffer buffer, void **ptr);
+QUARTZ_APIENTRY Quartz_Result quartzUnmapBuffer(Quartz_Device device, Quartz_Buffer buffer);
 #endif
 
 #ifdef __cplusplus

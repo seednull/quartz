@@ -4,6 +4,9 @@
 
 #define COBJMACROS
 #include <mmdeviceapi.h>
+#include <audioclient.h>
+
+#include "common/pool.h"
 
 typedef struct WASAPI_Instance_t
 {
@@ -15,7 +18,17 @@ typedef struct WASAPI_Device_t
 {
 	Quartz_DeviceTable *vtbl;
 	Quartz_DeviceInfo info;
+	IMMDevice *device;
+	Quartz_Pool buffers;
 } WASAPI_Device;
 
+typedef struct WASAPI_Buffer_t
+{
+	IAudioClient *client;
+} WASAPI_Buffer;
+
+Quartz_Result wasapi_helperFillDeviceInfo(IMMDevice *device, Quartz_DeviceInfo *info);
+EDataFlow wasapi_helperToDataFlow(Quartz_DeviceType type);
+
 Quartz_Result wasapi_fillDeviceInfo(Quartz_DeviceInfo *info);
-Quartz_Result wasapi_deviceInitialize(WASAPI_Device *device_ptr, WASAPI_Instance *instance_ptr);
+Quartz_Result wasapi_deviceInitialize(WASAPI_Device *device_ptr, WASAPI_Instance *instance_ptr, IMMDevice *wasapi_device);

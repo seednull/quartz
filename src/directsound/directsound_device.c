@@ -17,6 +17,27 @@ static Quartz_Result directsound_deviceGetInfo(Quartz_Device this, Quartz_Device
 	return QUARTZ_NOT_SUPPORTED;
 }
 
+/*
+ */
+static Quartz_Result directsound_deviceCreateBuffer(Quartz_Device this, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(desc);
+	QUARTZ_UNUSED(buffer);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+/*
+ */
+static Quartz_Result directsound_deviceDestroyBuffer(Quartz_Device this, Quartz_Buffer buffer)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
 static Quartz_Result directsound_deviceDestroy(Quartz_Device this)
 {
 	assert(this);
@@ -27,13 +48,37 @@ static Quartz_Result directsound_deviceDestroy(Quartz_Device this)
 	return QUARTZ_SUCCESS;
 }
 
+/*
+ */
+static Quartz_Result directsound_deviceMapBuffer(Quartz_Device this, Quartz_Buffer buffer, void **ptr)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+	QUARTZ_UNUSED(ptr);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result directsound_deviceUnmapBuffer(Quartz_Device this, Quartz_Buffer buffer)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
 
 /*
  */
 static Quartz_DeviceTable device_vtbl =
 {
 	directsound_deviceGetInfo,
+	directsound_deviceCreateBuffer,
+
+	directsound_deviceDestroyBuffer,
 	directsound_deviceDestroy,
+	
+	directsound_deviceMapBuffer,
+	directsound_deviceUnmapBuffer,
 };
 
 /*

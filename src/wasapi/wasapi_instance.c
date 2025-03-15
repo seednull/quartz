@@ -1,14 +1,12 @@
 #include "wasapi_internal.h"
 
-#include <functiondiscoverykeys_devpkey.h>
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 /*
  */
-static Quartz_Result wasapi_instanceEnumerateDevices(Quartz_Instance this, uint32_t *device_count, Quartz_DeviceInfo *infos)
+static Quartz_Result wasapi_instanceEnumerateDevices(Quartz_Instance this, Quartz_DeviceType type, uint32_t *device_count, Quartz_DeviceInfo *infos)
 {
 	assert(this);
 	assert(device_count);
@@ -19,16 +17,16 @@ static Quartz_Result wasapi_instanceEnumerateDevices(Quartz_Instance this, uint3
 
 	IMMDeviceCollection *collection = NULL;
 
-	EDataFlow data_flow = eRender; // TODO: determine from input argument
+	EDataFlow data_flow = wasapi_helperToDataFlow(type);
 	DWORD state_mask = DEVICE_STATE_ACTIVE | DEVICE_STATE_DISABLED;
 
-	HRESULT result = IMMDeviceEnumerator_EnumAudioEndpoints(wasapi_enumerator, data_flow, state_mask, &collection);
-	if (!SUCCEEDED(result))
+	HRESULT hr = IMMDeviceEnumerator_EnumAudioEndpoints(wasapi_enumerator, data_flow, state_mask, &collection);
+	if (!SUCCEEDED(hr))
 		return QUARTZ_WASAPI_ERROR;
 
 	UINT count = 0;
-	result = IMMDeviceCollection_GetCount(collection, &count);
-	if (!SUCCEEDED(result))
+	hr = IMMDeviceCollection_GetCount(collection, &count);
+	if (!SUCCEEDED(hr))
 	{
 		IMMDeviceCollection_Release(collection);
 		return QUARTZ_WASAPI_ERROR;
@@ -40,43 +38,21 @@ static Quartz_Result wasapi_instanceEnumerateDevices(Quartz_Instance this, uint3
 		for (UINT i = 0; i < count; ++i)
 		{
 			IMMDevice *device = NULL;
-			result = IMMDeviceCollection_Item(collection, i, &device);
-			if (!SUCCEEDED(result))
+			hr = IMMDeviceCollection_Item(collection, i, &device);
+			if (!SUCCEEDED(hr))
 			{
 				IMMDeviceCollection_Release(collection);
 				return QUARTZ_WASAPI_ERROR;
 			}
 
-			IPropertyStore *store = NULL;
-			result = IMMDevice_OpenPropertyStore(device, STGM_READ, &store);
-			if (!SUCCEEDED(result))
-			{
-				IMMDevice_Release(device);
-				IMMDeviceCollection_Release(collection);
-				return QUARTZ_WASAPI_ERROR;
-			}
-
-			PROPVARIANT friendly_name = {0};
-			PropVariantInit(&friendly_name);
-
-			result = IPropertyStore_GetValue(store, &PKEY_Device_FriendlyName, &friendly_name);
-			if (!SUCCEEDED(result))
-			{
-				IPropertyStore_Release(store);
-				IMMDevice_Release(device);
-				IMMDeviceCollection_Release(collection);
-				return QUARTZ_WASAPI_ERROR;
-			}
-
-			Quartz_DeviceInfo *info = &infos[i];
-			info->api = QUARTZ_API_WASAPI;
-
-			if (friendly_name.vt != VT_EMPTY)
-				WideCharToMultiByte(CP_UTF8, 0, friendly_name.pwszVal, -1, info->name, 256, NULL, NULL);
-
-			PropVariantClear(&friendly_name);
-			IPropertyStore_Release(store);
+			Quartz_Result quartz_result = wasapi_helperFillDeviceInfo(device, &infos[i]);
 			IMMDevice_Release(device);
+
+			if (quartz_result != QUARTZ_SUCCESS)
+			{
+				IMMDeviceCollection_Release(collection);
+				return QUARTZ_WASAPI_ERROR;
+			}
 		}
 	}
 
@@ -86,16 +62,88 @@ static Quartz_Result wasapi_instanceEnumerateDevices(Quartz_Instance this, uint3
 	return QUARTZ_SUCCESS;
 }
 
-static Quartz_Result wasapi_instanceCreateDevice(Quartz_Instance this, uint32_t index, Quartz_Device *device)
+static Quartz_Result wasapi_instanceCreateDevice(Quartz_Instance this, Quartz_DeviceType type, uint32_t index, Quartz_Device *device)
 {
 	assert(this);
 	assert(device);
 
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(index);
-	QUARTZ_UNUSED(device);
+	WASAPI_Instance *instance_ptr = (WASAPI_Instance *)this;
+	IMMDeviceEnumerator *wasapi_enumerator = instance_ptr->enumerator;
+	assert(wasapi_enumerator);
 
-	return QUARTZ_NOT_SUPPORTED;
+	IMMDeviceCollection *collection = NULL;
+
+	EDataFlow data_flow = wasapi_helperToDataFlow(type);
+	DWORD state_mask = DEVICE_STATE_ACTIVE | DEVICE_STATE_DISABLED;
+
+	HRESULT hr = IMMDeviceEnumerator_EnumAudioEndpoints(wasapi_enumerator, data_flow, state_mask, &collection);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+
+	UINT count = 0;
+	hr = IMMDeviceCollection_GetCount(collection, &count);
+	if (!SUCCEEDED(hr))
+	{
+		IMMDeviceCollection_Release(collection);
+		return QUARTZ_WASAPI_ERROR;
+	}
+
+	if (index >= count)
+	{
+		IMMDeviceCollection_Release(collection);
+		return QUARTZ_INVALID_DEVICE_INDEX;
+	}
+
+	IMMDevice *wasapi_device = NULL;
+	hr = IMMDeviceCollection_Item(collection, index, &wasapi_device);
+	IMMDeviceCollection_Release(collection);
+
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+
+	WASAPI_Device *device_ptr = (WASAPI_Device *)malloc(sizeof(WASAPI_Device));
+	assert(device_ptr);
+
+	Quartz_Result quartz_result = wasapi_deviceInitialize(device_ptr, instance_ptr, wasapi_device);
+	if (quartz_result != QUARTZ_SUCCESS)
+	{
+		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
+		return quartz_result;
+	}
+
+	*device = (Quartz_Device)device_ptr;
+	return QUARTZ_SUCCESS;
+}
+
+static Quartz_Result wasapi_instanceCreateDefaultDevice(Quartz_Instance this, Quartz_DeviceType type, Quartz_Device *device)
+{
+	assert(this);
+	assert(device);
+
+	WASAPI_Instance *instance_ptr = (WASAPI_Instance *)this;
+	IMMDeviceEnumerator *wasapi_enumerator = instance_ptr->enumerator;
+	assert(wasapi_enumerator);
+
+	EDataFlow data_flow = wasapi_helperToDataFlow(type);
+	ERole role = eConsole;
+
+	IMMDevice *wasapi_device = NULL;
+	HRESULT hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(wasapi_enumerator, data_flow, role, &wasapi_device);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+
+	WASAPI_Device *device_ptr = (WASAPI_Device *)malloc(sizeof(WASAPI_Device));
+	assert(device_ptr);
+
+	Quartz_Result quartz_result = wasapi_deviceInitialize(device_ptr, instance_ptr, wasapi_device);
+	if (quartz_result != QUARTZ_SUCCESS)
+	{
+		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
+		return quartz_result;
+	}
+
+	*device = (Quartz_Device)device_ptr;
+	return QUARTZ_SUCCESS;
 }
 
 static Quartz_Result wasapi_instanceDestroy(Quartz_Instance this)
@@ -118,6 +166,8 @@ static Quartz_InstanceTable instance_vtbl =
 {
 	wasapi_instanceEnumerateDevices,
 	wasapi_instanceCreateDevice,
+	wasapi_instanceCreateDefaultDevice,
+
 	wasapi_instanceDestroy,
 };
 
@@ -128,13 +178,13 @@ Quartz_Result wasapi_createInstance(const Quartz_InstanceDesc *desc, Quartz_Inst
 	assert(desc);
 	assert(instance);
 
-	HRESULT result = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-	if (!SUCCEEDED(result))
+	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	if (!SUCCEEDED(hr))
 		return QUARTZ_WASAPI_ERROR;
 
 	IMMDeviceEnumerator *enumerator = NULL;
-	result = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator, &enumerator);
-	if (!SUCCEEDED(result))
+	hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator, &enumerator);
+	if (!SUCCEEDED(hr))
 		return QUARTZ_WASAPI_ERROR;
 
 	WASAPI_Instance *ptr = (WASAPI_Instance *)malloc(sizeof(WASAPI_Instance));

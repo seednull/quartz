@@ -78,7 +78,7 @@ Quartz_Result quartzGetDeviceTable(Quartz_Device device, Quartz_DeviceTable *dev
 
 /*
  */
-Quartz_Result quartzEnumerateDevices(Quartz_Instance instance, uint32_t *device_count, Quartz_DeviceInfo *infos)
+Quartz_Result quartzEnumerateDevices(Quartz_Instance instance, Quartz_DeviceType type, uint32_t *device_count, Quartz_DeviceInfo *infos)
 {
 	if (instance == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_INSTANCE;
@@ -87,12 +87,10 @@ Quartz_Result quartzEnumerateDevices(Quartz_Instance instance, uint32_t *device_
 	assert(ptr->vtbl);
 	assert(ptr->vtbl->enumerateDevices);
 
-	return ptr->vtbl->enumerateDevices(instance, device_count, infos);
+	return ptr->vtbl->enumerateDevices(instance, type, device_count, infos);
 }
 
-/*
- */
-Quartz_Result quartzCreateDevice(Quartz_Instance instance, uint32_t index, Quartz_Device *device)
+Quartz_Result quartzCreateDevice(Quartz_Instance instance, Quartz_DeviceType type, uint32_t index, Quartz_Device *device)
 {
 	if (instance == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_INSTANCE;
@@ -101,12 +99,23 @@ Quartz_Result quartzCreateDevice(Quartz_Instance instance, uint32_t index, Quart
 	assert(ptr->vtbl);
 	assert(ptr->vtbl->createDevice);
 
-	return ptr->vtbl->createDevice(instance, index, device);
+	return ptr->vtbl->createDevice(instance, type, index, device);
+}
+
+Quartz_Result quartzCreateDefaultDevice(Quartz_Instance instance, Quartz_DeviceType type, Quartz_Device *device)
+{
+	if (instance == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_INSTANCE;
+
+	Quartz_InstanceInternal *ptr = (Quartz_InstanceInternal *)instance;
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->createDefaultDevice);
+
+	return ptr->vtbl->createDefaultDevice(instance, type, device);
 }
 
 /*
  */
-
 Quartz_Result quartzDestroyInstance(Quartz_Instance instance)
 {
 	if (instance == QUARTZ_NULL_HANDLE)
@@ -133,6 +142,34 @@ Quartz_Result quartzGetDeviceInfo(Quartz_Device device, Quartz_DeviceInfo *info)
 	return ptr->vtbl->getDeviceInfo(device, info);
 }
 
+/*
+ */
+Quartz_Result quartzCreateBuffer(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->createBuffer);
+
+	return ptr->vtbl->createBuffer(device, desc, buffer);
+}
+
+/*
+ */
+Quartz_Result quartzDestroyBuffer(Quartz_Device device, Quartz_Buffer buffer)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->destroyBuffer);
+
+	return ptr->vtbl->destroyBuffer(device, buffer);
+}
+
 Quartz_Result quartzDestroyDevice(Quartz_Device device)
 {
 	if (device == QUARTZ_NULL_HANDLE)
@@ -143,4 +180,30 @@ Quartz_Result quartzDestroyDevice(Quartz_Device device)
 	assert(ptr->vtbl->destroyDevice);
 
 	return ptr->vtbl->destroyDevice(device);
+}
+
+/*
+ */
+Quartz_Result quartzMapBuffer(Quartz_Device device, Quartz_Buffer buffer, void **mapped_ptr)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->mapBuffer);
+
+	return ptr->vtbl->mapBuffer(device, buffer, mapped_ptr);
+}
+
+Quartz_Result quartzUnmapBuffer(Quartz_Device device, Quartz_Buffer buffer)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->unmapBuffer);
+
+	return ptr->vtbl->unmapBuffer(device, buffer);
 }

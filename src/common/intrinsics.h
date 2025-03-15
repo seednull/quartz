@@ -1,0 +1,115 @@
+#pragma once
+
+#include <quartz.h>
+#include <assert.h>
+
+// Note: 'static' keyword is intentionally put here to avoid linker errors on emscripten.
+//       If compiled only with QUARTZ_INLINE, it searches for symbols and fails to link.
+//
+//       On a side, it's ok to keep these intrinsics statis and have multiple copies in
+//       translation units. We hope the compiler will inline them anyways.
+
+/*
+ */
+static QUARTZ_INLINE uint32_t lzcnt(uint32_t value)
+{
+	assert(value != 0);
+
+#ifdef _MSC_VER
+	unsigned long result = 0;
+	_BitScanReverse(&result, value);
+	return 31 - result;
+#else
+	return __builtin_clz(value);
+#endif
+}
+
+static QUARTZ_INLINE uint32_t tzcnt(uint32_t value)
+{
+	assert(value != 0);
+
+#ifdef _MSC_VER
+	unsigned long result = 0;
+	_BitScanForward(&result, value);
+	return result;
+#else
+	return __builtin_ctz(value);
+#endif
+}
+
+static QUARTZ_INLINE uint32_t popcnt(uint32_t value)
+{
+#ifdef _MSC_VER
+	return __popcnt(value);
+#else
+	return __builtin_popcount(value);
+#endif
+}
+
+static QUARTZ_INLINE uint32_t isPow2u(uint32_t value)
+{
+	return (value & (value - 1)) == 0;
+}
+
+static QUARTZ_INLINE uint64_t isPow2ul(uint64_t value)
+{
+	return (value & (value - 1)) == 0;
+}
+
+static QUARTZ_INLINE uint32_t isAlignedu(uint32_t value, uint32_t alignment)
+{
+	assert(isPow2u(alignment));
+
+	uint32_t mask = alignment - 1;
+	return (value & mask) == 0;
+}
+
+static QUARTZ_INLINE uint64_t isAlignedul(uint64_t value, uint64_t alignment)
+{
+	assert(isPow2ul(alignment));
+
+	uint64_t mask = alignment - 1;
+	return (value & mask) == 0;
+}
+
+static QUARTZ_INLINE uint32_t alignDown(uint32_t value, uint32_t alignment)
+{
+	assert(isPow2u(alignment));
+
+	uint32_t mask = alignment - 1;
+	return value & ~mask;
+}
+
+static QUARTZ_INLINE uint64_t alignDownul(uint64_t value, uint64_t alignment)
+{
+	assert(isPow2ul(alignment));
+
+	uint64_t mask = alignment - 1;
+	return value & ~mask;
+}
+
+static QUARTZ_INLINE uint32_t alignUp(uint32_t value, uint32_t alignment)
+{
+	assert(isPow2u(alignment));
+
+	uint32_t mask = alignment - 1;
+	return (value + mask) & ~mask;
+}
+
+static QUARTZ_INLINE uint64_t alignUpul(uint64_t value, uint64_t alignment)
+{
+	assert(isPow2ul(alignment));
+
+	uint64_t mask = alignment - 1;
+	return (value + mask) & ~mask;
+}
+
+static QUARTZ_INLINE uint32_t min(uint32_t a, uint32_t b)
+{
+	return (a < b) ? a : b;
+}
+
+static QUARTZ_INLINE uint32_t max(uint32_t a, uint32_t b)
+{
+	return (a < b) ? b : a;
+}

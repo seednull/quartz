@@ -17,6 +17,27 @@ static Quartz_Result null_deviceGetInfo(Quartz_Device this, Quartz_DeviceInfo *i
 	return QUARTZ_SUCCESS;
 }
 
+/*
+ */
+static Quartz_Result null_deviceCreateBuffer(Quartz_Device this, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(desc);
+	QUARTZ_UNUSED(buffer);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+/*
+ */
+static Quartz_Result null_deviceDestroyBuffer(Quartz_Device this, Quartz_Buffer buffer)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
 static Quartz_Result null_deviceDestroy(Quartz_Device this)
 {
 	assert(this);
@@ -27,13 +48,37 @@ static Quartz_Result null_deviceDestroy(Quartz_Device this)
 	return QUARTZ_SUCCESS;
 }
 
+/*
+ */
+static Quartz_Result null_deviceMapBuffer(Quartz_Device this, Quartz_Buffer buffer, void **ptr)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+	QUARTZ_UNUSED(ptr);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result null_deviceUnmapBuffer(Quartz_Device this, Quartz_Buffer buffer)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
 
 /*
  */
 static Quartz_DeviceTable device_vtbl =
 {
 	null_deviceGetInfo,
+	null_deviceCreateBuffer,
+
+	null_deviceDestroyBuffer,
 	null_deviceDestroy,
+	
+	null_deviceMapBuffer,
+	null_deviceUnmapBuffer,
 };
 
 /*

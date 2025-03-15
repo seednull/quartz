@@ -6,27 +6,34 @@
 
 /*
  */
-static Quartz_Result directsound_instanceEnumerateDevices(Quartz_Instance this, uint32_t *device_count, Quartz_DeviceInfo *infos)
+static Quartz_Result directsound_instanceEnumerateDevices(Quartz_Instance this, Quartz_DeviceType type, uint32_t *device_count, Quartz_DeviceInfo *infos)
 {
 	assert(this);
 	assert(device_count);
 	assert(infos);
 
 	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(type);
 	QUARTZ_UNUSED(device_count);
 	QUARTZ_UNUSED(infos);
 
 	return QUARTZ_NOT_SUPPORTED;
 }
 
-static Quartz_Result directsound_instanceCreateDevice(Quartz_Instance this, uint32_t index, Quartz_Device *device)
+static Quartz_Result directsound_instanceCreateDevice(Quartz_Instance this, Quartz_DeviceType type, uint32_t index, Quartz_Device *device)
 {
-	assert(this);
-	assert(index);
-	assert(device);
-
 	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(type);
 	QUARTZ_UNUSED(index);
+	QUARTZ_UNUSED(device);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result directsound_instanceCreateDefaultDevice(Quartz_Instance this, Quartz_DeviceType type, Quartz_Device *device)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(type);
 	QUARTZ_UNUSED(device);
 
 	return QUARTZ_NOT_SUPPORTED;
@@ -48,6 +55,8 @@ static Quartz_InstanceTable instance_vtbl =
 {
 	directsound_instanceEnumerateDevices,
 	directsound_instanceCreateDevice,
+	directsound_instanceCreateDefaultDevice,
+
 	directsound_instanceDestroy,
 };
 
