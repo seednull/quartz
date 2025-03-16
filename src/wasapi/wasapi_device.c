@@ -32,7 +32,7 @@ static Quartz_Result wasapi_deviceGetInfo(Quartz_Device this, Quartz_DeviceInfo 
 static Quartz_Result wasapi_deviceCreateBuffer(Quartz_Device this, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer)
 {
 	assert(this);
-	QUARTZ_UNUSED(desc);
+	assert(desc);
 	assert(buffer);
 
 	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
@@ -44,25 +44,36 @@ static Quartz_Result wasapi_deviceCreateBuffer(Quartz_Device this, const Quartz_
 	if (!SUCCEEDED(hr))
 		return QUARTZ_WASAPI_ERROR;
 
-	WAVEFORMATEXTENSIBLE format = {0};
-	WAVEFORMATEXTENSIBLE *current_format = NULL;
+	AUDCLNT_SHAREMODE share_mode = AUDCLNT_SHAREMODE_SHARED;
+	REFERENCE_TIME duration = desc->duration_milliseconds * 1000;
 
-	hr = IAudioClient_GetMixFormat(wasapi_client, (WAVEFORMATEX **)&current_format);
+	uint32_t bit_depth = wasapi_helperToBitDepth(desc->format);
+	uint32_t audio_frame_size = desc->num_channels * bit_depth / 8;
+
+	WAVEFORMATEX format = {0};
+	format.wFormatTag = WAVE_FORMAT_PCM;
+	format.nChannels = (WORD)desc->num_channels;
+	format.nSamplesPerSec = desc->sample_rate;
+	format.nAvgBytesPerSec = desc->sample_rate * audio_frame_size;
+	format.nBlockAlign = (WORD)audio_frame_size;
+	format.wBitsPerSample = (WORD)bit_depth;
+
+	WAVEFORMATEX *closest_match_format = NULL;
+	hr = IAudioClient_IsFormatSupported(wasapi_client, share_mode, &format, &closest_match_format);
 	if (!SUCCEEDED(hr))
 	{
 		IAudioClient_Release(wasapi_client);
 		return QUARTZ_WASAPI_ERROR;
 	}
 
-	size_t size = sizeof(WAVEFORMATEX) + current_format->Format.cbSize;
-	assert(size <= sizeof(WAVEFORMATEXTENSIBLE));
+	if (hr == S_FALSE)
+	{
+		CoTaskMemFree(closest_match_format);
+		IAudioClient_Release(wasapi_client);
+		return QUARTZ_INVALID_BUFFER_FORMAT;
+	}
 
-	memcpy(&format, current_format, size);
-	CoTaskMemFree(current_format);
-
-	REFERENCE_TIME duration = 10000000;
-
-	hr = IAudioClient_Initialize(wasapi_client, AUDCLNT_SHAREMODE_SHARED, 0, duration, 0, (WAVEFORMATEX *)&format, NULL);
+	hr = IAudioClient_Initialize(wasapi_client, share_mode, 0, duration, 0, &format, NULL);
 	if (!SUCCEEDED(hr))
 	{
 		IAudioClient_Release(wasapi_client);

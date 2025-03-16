@@ -17,6 +17,21 @@ EDataFlow wasapi_helperToDataFlow(Quartz_DeviceType type)
 	return wasapi_flows[type];
 }
 
+uint32_t wasapi_helperToBitDepth(Quartz_SampleFormat format)
+{
+	static uint32_t wasapi_bit_depths[] =
+	{
+		0,
+		8,
+		16,
+		24,
+		32,
+		32,
+	};
+
+	return wasapi_bit_depths[format];
+}
+
 Quartz_Result wasapi_helperFillDeviceInfo(IMMDevice *device, Quartz_DeviceInfo *info)
 {
 	assert(device);
