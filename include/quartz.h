@@ -53,6 +53,7 @@ typedef enum Quartz_Result_t
 	QUARTZ_INVALID_INSTANCE,
 	QUARTZ_INVALID_DEVICE,
 	QUARTZ_INVALID_DEVICE_INDEX,
+	QUARTZ_INVALID_BUFFER_FORMAT,
 
 	// FIXME: add more error codes for internal errors
 	QUARTZ_INTERNAL_ERROR,
@@ -85,6 +86,39 @@ typedef enum Quartz_DeviceType_t
 	QUARTZ_DEVICE_TYPE_ENUM_FORCE32 = 0x7FFFFFFF,
 } Quartz_DeviceType;
 
+typedef enum Quartz_SampleFormat_t
+{
+	QUARTZ_SAMPLE_FORMAT_UNKNOWN = 0,
+	QUARTZ_SAMPLE_FORMAT_UINT8,
+	QUARTZ_SAMPLE_FORMAT_SINT16,
+	QUARTZ_SAMPLE_FORMAT_SINT24,
+	QUARTZ_SAMPLE_FORMAT_SINT32,
+	QUARTZ_SAMPLE_FORMAT_FLOAT32,
+
+	QUARTZ_SAMPLE_FORMAT_ENUM_MAX,
+	QUARTZ_SAMPLE_FORMAT_ENUM_FORCE32 = 0x7FFFFFFF,
+} Quartz_SampleFormat;
+
+typedef enum Quartz_SampleRate_t
+{
+	QUARTZ_SAMPLE_RATE_48000 = 48000,
+	QUARTZ_SAMPLE_RATE_44100 = 44100,
+
+	QUARTZ_SAMPLE_RATE_32000 = 32000,
+	QUARTZ_SAMPLE_RATE_24000 = 24000,
+	QUARTZ_SAMPLE_RATE_22050 = 22050,
+
+	QUARTZ_SAMPLE_RATE_88200 = 88200,
+	QUARTZ_SAMPLE_RATE_96000 = 96000,
+	QUARTZ_SAMPLE_RATE_176400 = 176400,
+	QUARTZ_SAMPLE_RATE_192000 = 192000,
+
+	QUARTZ_SAMPLE_RATE_MIN = QUARTZ_SAMPLE_RATE_22050,
+	QUARTZ_SAMPLE_RATE_MAX = QUARTZ_SAMPLE_RATE_192000,
+
+	QUARTZ_SAMPLE_RATE_ENUM_FORCE32 = 0x7FFFFFFF,
+} Quartz_SampleRate;
+
 // Structs
 typedef struct Quartz_InstanceDesc_t
 {
@@ -103,7 +137,10 @@ typedef struct Quartz_DeviceInfo_t
 typedef struct Quartz_BufferDesc_t
 {
 	uint32_t sample_rate;
-	uint32_t bit_depth;
+	Quartz_SampleFormat format;
+	uint32_t duration_milliseconds;
+	uint32_t num_channels;
+	// TODO: channel mappings (1:0, 2:0, 2:1, 5:1, 5:2, 7:1)
 } Quartz_BufferDesc;
 
 // Function pointers
