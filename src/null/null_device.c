@@ -50,19 +50,56 @@ static Quartz_Result null_deviceDestroy(Quartz_Device this)
 
 /*
  */
-static Quartz_Result null_deviceMapBuffer(Quartz_Device this, Quartz_Buffer buffer, void **ptr)
+static Quartz_Result null_deviceStart(Quartz_Device this, Quartz_Buffer buffer)
 {
 	QUARTZ_UNUSED(this);
 	QUARTZ_UNUSED(buffer);
-	QUARTZ_UNUSED(ptr);
 
 	return QUARTZ_NOT_SUPPORTED;
 }
 
-static Quartz_Result null_deviceUnmapBuffer(Quartz_Device this, Quartz_Buffer buffer)
+static Quartz_Result null_deviceStop(Quartz_Device this, Quartz_Buffer buffer)
 {
 	QUARTZ_UNUSED(this);
 	QUARTZ_UNUSED(buffer);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result null_deviceBeginRender(Quartz_Device this, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+	QUARTZ_UNUSED(ptr);
+	QUARTZ_UNUSED(frame_count);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result null_deviceEndRender(Quartz_Device this, Quartz_Buffer buffer, uint32_t frames_written)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+	QUARTZ_UNUSED(frames_written);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result null_deviceBeginCapture(Quartz_Device this, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+	QUARTZ_UNUSED(ptr);
+	QUARTZ_UNUSED(frame_count);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result null_deviceEndCapture(Quartz_Device this, Quartz_Buffer buffer, uint32_t frames_read)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(buffer);
+	QUARTZ_UNUSED(frames_read);
 
 	return QUARTZ_NOT_SUPPORTED;
 }
@@ -77,13 +114,17 @@ static Quartz_DeviceTable device_vtbl =
 	null_deviceDestroyBuffer,
 	null_deviceDestroy,
 	
-	null_deviceMapBuffer,
-	null_deviceUnmapBuffer,
+	null_deviceStart,
+	null_deviceStop,
+	null_deviceBeginRender,
+	null_deviceEndRender,
+	null_deviceBeginCapture,
+	null_deviceEndCapture,
 };
 
 /*
  */
-Quartz_Result null_fillDeviceInfo(Quartz_DeviceInfo *info)
+Quartz_Result null_fillDeviceInfo(Quartz_DeviceType type, Quartz_DeviceInfo *info)
 {
 	static const char *device_name = "Null Device";
 
@@ -93,11 +134,12 @@ Quartz_Result null_fillDeviceInfo(Quartz_DeviceInfo *info)
 	memcpy(info->name, device_name, sizeof(char) * 12);
 
 	info->api = QUARTZ_API_NULL;
+	info->type = type;
 
 	return QUARTZ_SUCCESS;
 }
 
-Quartz_Result null_deviceInitialize(Null_Device *device_ptr, Null_Instance *instance_ptr)
+Quartz_Result null_deviceInitialize(Null_Device *device_ptr, Null_Instance *instance_ptr, Quartz_DeviceType type)
 {
 	assert(instance_ptr);
 	assert(device_ptr);
@@ -108,5 +150,5 @@ Quartz_Result null_deviceInitialize(Null_Device *device_ptr, Null_Instance *inst
 	device_ptr->vtbl = &device_vtbl;
 
 	// data
-	return null_fillDeviceInfo(&device_ptr->info);
+	return null_fillDeviceInfo(type, &device_ptr->info);
 }

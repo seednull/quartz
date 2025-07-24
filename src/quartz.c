@@ -184,26 +184,76 @@ Quartz_Result quartzDestroyDevice(Quartz_Device device)
 
 /*
  */
-Quartz_Result quartzMapBuffer(Quartz_Device device, Quartz_Buffer buffer, void **mapped_ptr)
+Quartz_Result quartzStart(Quartz_Device device, Quartz_Buffer buffer)
 {
 	if (device == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_DEVICE;
 
 	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
 	assert(ptr->vtbl);
-	assert(ptr->vtbl->mapBuffer);
+	assert(ptr->vtbl->start);
 
-	return ptr->vtbl->mapBuffer(device, buffer, mapped_ptr);
+	return ptr->vtbl->start(device, buffer);
 }
 
-Quartz_Result quartzUnmapBuffer(Quartz_Device device, Quartz_Buffer buffer)
+Quartz_Result quartzStop(Quartz_Device device, Quartz_Buffer buffer)
 {
 	if (device == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_DEVICE;
 
 	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
 	assert(ptr->vtbl);
-	assert(ptr->vtbl->unmapBuffer);
+	assert(ptr->vtbl->stop);
 
-	return ptr->vtbl->unmapBuffer(device, buffer);
+	return ptr->vtbl->stop(device, buffer);
+}
+
+
+Quartz_Result quartzBeginRender(Quartz_Device device, Quartz_Buffer buffer, void **mapped_ptr, uint32_t *frame_count)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->beginRender);
+
+	return ptr->vtbl->beginRender(device, buffer, mapped_ptr, frame_count);
+}
+
+Quartz_Result quartzEndRender(Quartz_Device device, Quartz_Buffer buffer, uint32_t frames_written)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->endRender);
+
+	return ptr->vtbl->endRender(device, buffer, frames_written);
+}
+
+
+Quartz_Result quartzBeginCapture(Quartz_Device device, Quartz_Buffer buffer, void **mapped_ptr, uint32_t *frame_count)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->beginCapture);
+
+	return ptr->vtbl->beginCapture(device, buffer, mapped_ptr, frame_count);
+}
+
+Quartz_Result quartzEndCapture(Quartz_Device device, Quartz_Buffer buffer, uint32_t frames_read)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->endCapture);
+
+	return ptr->vtbl->endCapture(device, buffer, frames_read);
 }

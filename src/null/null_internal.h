@@ -17,5 +17,5 @@ typedef struct Null_Device_t
 	Quartz_DeviceInfo info;
 } Null_Device;
 
-Quartz_Result null_fillDeviceInfo(Quartz_DeviceInfo *info);
-Quartz_Result null_deviceInitialize(Null_Device *device_ptr, Null_Instance *instance_ptr);
+Quartz_Result null_fillDeviceInfo(Quartz_DeviceType type, Quartz_DeviceInfo *info);
+Quartz_Result null_deviceInitialize(Null_Device *device_ptr, Null_Instance *instance_ptr, Quartz_DeviceType type);

@@ -158,9 +158,14 @@ typedef Quartz_Result (*PFN_quartzCreateBuffer)(Quartz_Device device, const Quar
 typedef Quartz_Result (*PFN_quartzDestroyBuffer)(Quartz_Device device, Quartz_Buffer buffer);
 typedef Quartz_Result (*PFN_quartzDestroyDevice)(Quartz_Device device);
 
-typedef Quartz_Result (*PFN_quartzMapBuffer)(Quartz_Device device, Quartz_Buffer buffer, void **ptr);
-typedef Quartz_Result (*PFN_quartzUnmapBuffer)(Quartz_Device device, Quartz_Buffer buffer);
+typedef Quartz_Result (*PFN_quartzStart)(Quartz_Device device, Quartz_Buffer buffer);
+typedef Quartz_Result (*PFN_quartzStop)(Quartz_Device device, Quartz_Buffer buffer);
 
+typedef Quartz_Result (*PFN_quartzBeginRender)(Quartz_Device device, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count);
+typedef Quartz_Result (*PFN_quartzEndRender)(Quartz_Device device, Quartz_Buffer buffer, uint32_t frames_written);
+
+typedef Quartz_Result (*PFN_quartzBeginCapture)(Quartz_Device device, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count);
+typedef Quartz_Result (*PFN_quartzEndCapture)(Quartz_Device device, Quartz_Buffer buffer, uint32_t frames_read);
 
 typedef struct Quartz_InstanceTable_t
 {
@@ -178,9 +183,13 @@ typedef struct Quartz_DeviceTable_t
 
 	PFN_quartzDestroyBuffer destroyBuffer;
 	PFN_quartzDestroyDevice destroyDevice;
-	
-	PFN_quartzMapBuffer mapBuffer;
-	PFN_quartzUnmapBuffer unmapBuffer;
+
+	PFN_quartzStart start;
+	PFN_quartzStop stop;
+	PFN_quartzBeginRender beginRender;
+	PFN_quartzEndRender endRender;
+	PFN_quartzBeginCapture beginCapture;
+	PFN_quartzEndCapture endCapture;
 } Quartz_DeviceTable;
 
 // API
@@ -202,8 +211,14 @@ QUARTZ_APIENTRY Quartz_Result quartzCreateBuffer(Quartz_Device device, const Qua
 QUARTZ_APIENTRY Quartz_Result quartzDestroyBuffer(Quartz_Device device, Quartz_Buffer buffer);
 QUARTZ_APIENTRY Quartz_Result quartzDestroyDevice(Quartz_Device device);
 
-QUARTZ_APIENTRY Quartz_Result quartzMapBuffer(Quartz_Device device, Quartz_Buffer buffer, void **ptr);
-QUARTZ_APIENTRY Quartz_Result quartzUnmapBuffer(Quartz_Device device, Quartz_Buffer buffer);
+QUARTZ_APIENTRY Quartz_Result quartzStart(Quartz_Device device, Quartz_Buffer buffer);
+QUARTZ_APIENTRY Quartz_Result quartzStop(Quartz_Device device, Quartz_Buffer buffer);
+
+QUARTZ_APIENTRY Quartz_Result quartzBeginRender(Quartz_Device device, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count);
+QUARTZ_APIENTRY Quartz_Result quartzEndRender(Quartz_Device device, Quartz_Buffer buffer, uint32_t frames_written);
+
+QUARTZ_APIENTRY Quartz_Result quartzBeginCapture(Quartz_Device device, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count);
+QUARTZ_APIENTRY Quartz_Result quartzEndCapture(Quartz_Device device, Quartz_Buffer buffer, uint32_t frames_read);
 #endif
 
 #ifdef __cplusplus

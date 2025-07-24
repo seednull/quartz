@@ -17,7 +17,7 @@ static Quartz_Result null_instanceEnumerateDevices(Quartz_Instance this, Quartz_
 	*device_count = 1;
 
 	if (infos)
-		null_fillDeviceInfo(&infos[0]);
+		null_fillDeviceInfo(type, &infos[0]);
 
 	return QUARTZ_SUCCESS;
 }
@@ -36,7 +36,7 @@ static Quartz_Result null_instanceCreateDevice(Quartz_Instance this, Quartz_Devi
 	Null_Device *device_ptr = (Null_Device *)malloc(sizeof(Null_Device));
 	assert(device_ptr);
 
-	Quartz_Result result = null_deviceInitialize(device_ptr, instance_ptr);
+	Quartz_Result result = null_deviceInitialize(device_ptr, instance_ptr, type);
 	if (result != QUARTZ_SUCCESS)
 	{
 		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
@@ -58,7 +58,7 @@ static Quartz_Result null_instanceCreateDefaultDevice(Quartz_Instance this, Quar
 	Null_Device *device_ptr = (Null_Device *)malloc(sizeof(Null_Device));
 	assert(device_ptr);
 
-	Quartz_Result result = null_deviceInitialize(device_ptr, instance_ptr);
+	Quartz_Result result = null_deviceInitialize(device_ptr, instance_ptr, type);
 	if (result != QUARTZ_SUCCESS)
 	{
 		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
