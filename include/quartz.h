@@ -79,8 +79,8 @@ typedef enum Quartz_Api_t
 
 typedef enum Quartz_DeviceType_t
 {
-	QUARTZ_DEVICE_TYPE_PLAYBACK = 0,
-	QUARTZ_DEVICE_TYPE_RECORDING,
+	QUARTZ_DEVICE_TYPE_RENDER = 0,
+	QUARTZ_DEVICE_TYPE_CAPTURE,
 
 	QUARTZ_DEVICE_TYPE_ENUM_MAX,
 	QUARTZ_DEVICE_TYPE_ENUM_FORCE32 = 0x7FFFFFFF,
@@ -132,6 +132,7 @@ typedef struct Quartz_DeviceInfo_t
 {
 	char name[256];
 	Quartz_Api api;
+	Quartz_DeviceType type;
 } Quartz_DeviceInfo;
 
 typedef struct Quartz_BufferDesc_t
