@@ -4,8 +4,8 @@
 
 static const char *device_types[] =
 {
-	"Playback",
-	"Recording",
+	"Render",
+	"Capture",
 };
 
 static void printDeviceInfo(const Quartz_DeviceInfo *info)
@@ -85,8 +85,8 @@ int main()
 
 	Quartz_DeviceType types[] =
 	{
-		QUARTZ_DEVICE_TYPE_PLAYBACK,
-		QUARTZ_DEVICE_TYPE_RECORDING,
+		QUARTZ_DEVICE_TYPE_RENDER,
+		QUARTZ_DEVICE_TYPE_CAPTURE,
 	};
 
 	const size_t count = std::size(types);
