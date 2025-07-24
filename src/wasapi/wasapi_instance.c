@@ -45,7 +45,7 @@ static Quartz_Result wasapi_instanceEnumerateDevices(Quartz_Instance this, Quart
 				return QUARTZ_WASAPI_ERROR;
 			}
 
-			Quartz_Result quartz_result = wasapi_helperFillDeviceInfo(device, &infos[i]);
+			Quartz_Result quartz_result = wasapi_helperFillDeviceInfo(device, type, &infos[i]);
 			IMMDevice_Release(device);
 
 			if (quartz_result != QUARTZ_SUCCESS)
@@ -104,7 +104,7 @@ static Quartz_Result wasapi_instanceCreateDevice(Quartz_Instance this, Quartz_De
 	WASAPI_Device *device_ptr = (WASAPI_Device *)malloc(sizeof(WASAPI_Device));
 	assert(device_ptr);
 
-	Quartz_Result quartz_result = wasapi_deviceInitialize(device_ptr, instance_ptr, wasapi_device);
+	Quartz_Result quartz_result = wasapi_deviceInitialize(device_ptr, instance_ptr, wasapi_device, type);
 	if (quartz_result != QUARTZ_SUCCESS)
 	{
 		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
@@ -135,7 +135,7 @@ static Quartz_Result wasapi_instanceCreateDefaultDevice(Quartz_Instance this, Qu
 	WASAPI_Device *device_ptr = (WASAPI_Device *)malloc(sizeof(WASAPI_Device));
 	assert(device_ptr);
 
-	Quartz_Result quartz_result = wasapi_deviceInitialize(device_ptr, instance_ptr, wasapi_device);
+	Quartz_Result quartz_result = wasapi_deviceInitialize(device_ptr, instance_ptr, wasapi_device, type);
 	if (quartz_result != QUARTZ_SUCCESS)
 	{
 		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);

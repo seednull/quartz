@@ -11,6 +11,12 @@ static void wasapi_destroyBuffer(WASAPI_Device *device_ptr, WASAPI_Buffer *buffe
 	QUARTZ_UNUSED(device_ptr);
 	assert(buffer_ptr);
 
+	if (buffer_ptr->capture_client)
+		IAudioCaptureClient_Release(buffer_ptr->capture_client);
+
+	if (buffer_ptr->render_client)
+		IAudioRenderClient_Release(buffer_ptr->render_client);
+
 	IAudioClient_Release(buffer_ptr->client);
 }
 
@@ -24,7 +30,7 @@ static Quartz_Result wasapi_deviceGetInfo(Quartz_Device this, Quartz_DeviceInfo 
 	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
 	IMMDevice *wasapi_device = device_ptr->device;
 
-	return wasapi_helperFillDeviceInfo(wasapi_device, info);
+	return wasapi_helperFillDeviceInfo(wasapi_device, device_ptr->type, info);
 }
 
 /*
@@ -45,11 +51,13 @@ static Quartz_Result wasapi_deviceCreateBuffer(Quartz_Device this, const Quartz_
 		return QUARTZ_WASAPI_ERROR;
 
 	AUDCLNT_SHAREMODE share_mode = AUDCLNT_SHAREMODE_SHARED;
-	REFERENCE_TIME duration = desc->duration_milliseconds * 1000;
+	REFERENCE_TIME duration = desc->duration_milliseconds * 10000;
 
 	uint32_t bit_depth = wasapi_helperToBitDepth(desc->format);
 	uint32_t audio_frame_size = desc->num_channels * bit_depth / 8;
 
+	// TODO: add support for 32-bit float format
+	// TODO: add support for 8-bit unsigned int format
 	WAVEFORMATEX format = {0};
 	format.wFormatTag = WAVE_FORMAT_PCM;
 	format.nChannels = (WORD)desc->num_channels;
@@ -80,9 +88,46 @@ static Quartz_Result wasapi_deviceCreateBuffer(Quartz_Device this, const Quartz_
 		return QUARTZ_WASAPI_ERROR;
 	}
 
+	UINT32 wasapi_buffer_size = 0;
+	hr = IAudioClient_GetBufferSize(wasapi_client, &wasapi_buffer_size);
+	if (!SUCCEEDED(hr))
+	{
+		IAudioClient_Release(wasapi_client);
+		return QUARTZ_WASAPI_ERROR;
+	}
+
+	IAudioRenderClient *wasapi_render_client = NULL;
+	IAudioCaptureClient *wasapi_capture_client = NULL;
+
+	uint32_t want_render = (device_ptr->type == QUARTZ_DEVICE_TYPE_RENDER);
+	uint32_t want_capture = (device_ptr->type == QUARTZ_DEVICE_TYPE_CAPTURE);
+
+	if (want_render)
+	{
+		hr = IAudioClient_GetService(wasapi_client, &IID_IAudioRenderClient, &wasapi_render_client);
+		if (!SUCCEEDED(hr))
+		{
+			IAudioClient_Release(wasapi_client);
+			return QUARTZ_WASAPI_ERROR;
+		}
+	}
+
+	if (want_capture)
+	{
+		hr = IAudioClient_GetService(wasapi_client, &IID_IAudioCaptureClient, &wasapi_capture_client);
+		if (!SUCCEEDED(hr))
+		{
+			IAudioClient_Release(wasapi_client);
+			return QUARTZ_WASAPI_ERROR;
+		}
+	}
+
 	// create quartz struct
 	WASAPI_Buffer result = {0};
 	result.client = wasapi_client;
+	result.render_client = wasapi_render_client;
+	result.capture_client = wasapi_capture_client;
+	result.size = wasapi_buffer_size;
 
 	*buffer = (Quartz_Buffer)quartz_poolAddElement(&device_ptr->buffers, &result);
 	return QUARTZ_SUCCESS;
@@ -136,21 +181,133 @@ static Quartz_Result wasapi_deviceDestroy(Quartz_Device this)
 
 /*
  */
-static Quartz_Result wasapi_deviceMapBuffer(Quartz_Device this, Quartz_Buffer buffer, void **ptr)
+static Quartz_Result wasapi_deviceStart(Quartz_Device this, Quartz_Buffer buffer)
 {
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(buffer);
-	QUARTZ_UNUSED(ptr);
+	assert(this);
+	assert(buffer);
 
-	return QUARTZ_NOT_SUPPORTED;
+	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
+
+	WASAPI_Buffer *buffer_ptr = (WASAPI_Buffer *)quartz_poolGetElement(&device_ptr->buffers, (Quartz_PoolHandle)buffer);
+	assert(buffer_ptr);
+	assert(buffer_ptr->client);
+
+	HRESULT hr = IAudioClient_Start(buffer_ptr->client);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+	
+	return QUARTZ_SUCCESS;
 }
 
-static Quartz_Result wasapi_deviceUnmapBuffer(Quartz_Device this, Quartz_Buffer buffer)
+static Quartz_Result wasapi_deviceStop(Quartz_Device this, Quartz_Buffer buffer)
 {
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(buffer);
+	assert(this);
+	assert(buffer);
 
-	return QUARTZ_NOT_SUPPORTED;
+	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
+
+	WASAPI_Buffer *buffer_ptr = (WASAPI_Buffer *)quartz_poolGetElement(&device_ptr->buffers, (Quartz_PoolHandle)buffer);
+	assert(buffer_ptr);
+	assert(buffer_ptr->client);
+
+	HRESULT hr = IAudioClient_Stop(buffer_ptr->client);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+	
+	return QUARTZ_SUCCESS;
+}
+
+static Quartz_Result wasapi_deviceBeginRender(Quartz_Device this, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count)
+{
+	assert(this);
+	assert(buffer);
+	assert(ptr);
+	assert(frame_count);
+
+	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
+
+	WASAPI_Buffer *buffer_ptr = (WASAPI_Buffer *)quartz_poolGetElement(&device_ptr->buffers, (Quartz_PoolHandle)buffer);
+	assert(buffer_ptr);
+	assert(buffer_ptr->client);
+	assert(buffer_ptr->render_client);
+
+	UINT32 padding = 0;
+	HRESULT hr = IAudioClient_GetCurrentPadding(buffer_ptr->client, &padding);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+
+	UINT32 frames = buffer_ptr->size - padding;
+
+	hr = IAudioRenderClient_GetBuffer(buffer_ptr->render_client, frames, (BYTE **)ptr);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+	
+	*frame_count = frames;
+	return QUARTZ_SUCCESS;
+}
+
+static Quartz_Result wasapi_deviceEndRender(Quartz_Device this, Quartz_Buffer buffer, uint32_t frames_written)
+{
+	assert(this);
+	assert(buffer);
+
+	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
+
+	WASAPI_Buffer *buffer_ptr = (WASAPI_Buffer *)quartz_poolGetElement(&device_ptr->buffers, (Quartz_PoolHandle)buffer);
+	assert(buffer_ptr);
+	assert(buffer_ptr->client);
+	assert(buffer_ptr->render_client);
+
+	// TODO: expose silent flag in the API?
+	HRESULT hr = IAudioRenderClient_ReleaseBuffer(buffer_ptr->render_client, frames_written, 0);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+	
+	return QUARTZ_SUCCESS;
+}
+
+static Quartz_Result wasapi_deviceBeginCapture(Quartz_Device this, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count)
+{
+	assert(this);
+	assert(buffer);
+	assert(ptr);
+	assert(frame_count);
+
+	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
+
+	WASAPI_Buffer *buffer_ptr = (WASAPI_Buffer *)quartz_poolGetElement(&device_ptr->buffers, (Quartz_PoolHandle)buffer);
+	assert(buffer_ptr);
+	assert(buffer_ptr->client);
+	assert(buffer_ptr->capture_client);
+
+	// TODO: should we zero buffer manually or expose silent flag in the API?
+	DWORD flags = 0;
+
+	HRESULT hr = IAudioCaptureClient_GetBuffer(buffer_ptr->capture_client, (BYTE **)ptr, frame_count, &flags, NULL, NULL);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+	
+	
+	return QUARTZ_SUCCESS;
+}
+
+static Quartz_Result wasapi_deviceEndCapture(Quartz_Device this, Quartz_Buffer buffer, uint32_t frames_read)
+{
+	assert(this);
+	assert(buffer);
+
+	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
+
+	WASAPI_Buffer *buffer_ptr = (WASAPI_Buffer *)quartz_poolGetElement(&device_ptr->buffers, (Quartz_PoolHandle)buffer);
+	assert(buffer_ptr);
+	assert(buffer_ptr->client);
+	assert(buffer_ptr->capture_client);
+
+	HRESULT hr = IAudioCaptureClient_ReleaseBuffer(buffer_ptr->capture_client, frames_read);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+	
+	return QUARTZ_SUCCESS;
 }
 
 /*
@@ -163,13 +320,17 @@ static Quartz_DeviceTable device_vtbl =
 	wasapi_deviceDestroyBuffer,
 	wasapi_deviceDestroy,
 	
-	wasapi_deviceMapBuffer,
-	wasapi_deviceUnmapBuffer,
+	wasapi_deviceStart,
+	wasapi_deviceStop,
+	wasapi_deviceBeginRender,
+	wasapi_deviceEndRender,
+	wasapi_deviceBeginCapture,
+	wasapi_deviceEndCapture,
 };
 
 /*
  */
-Quartz_Result wasapi_deviceInitialize(WASAPI_Device *device_ptr, WASAPI_Instance *instance_ptr, IMMDevice *wasapi_device)
+Quartz_Result wasapi_deviceInitialize(WASAPI_Device *device_ptr, WASAPI_Instance *instance_ptr, IMMDevice *wasapi_device, Quartz_DeviceType type)
 {
 	assert(instance_ptr);
 	assert(device_ptr);
@@ -180,6 +341,7 @@ Quartz_Result wasapi_deviceInitialize(WASAPI_Device *device_ptr, WASAPI_Instance
 	device_ptr->vtbl = &device_vtbl;
 
 	// data
+	device_ptr->type = type;
 	device_ptr->device = wasapi_device;
 
 	// pools

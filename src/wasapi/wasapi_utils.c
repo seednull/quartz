@@ -32,7 +32,7 @@ uint32_t wasapi_helperToBitDepth(Quartz_SampleFormat format)
 	return wasapi_bit_depths[format];
 }
 
-Quartz_Result wasapi_helperFillDeviceInfo(IMMDevice *device, Quartz_DeviceInfo *info)
+Quartz_Result wasapi_helperFillDeviceInfo(IMMDevice *device, Quartz_DeviceType type, Quartz_DeviceInfo *info)
 {
 	assert(device);
 	assert(info);
@@ -57,6 +57,7 @@ Quartz_Result wasapi_helperFillDeviceInfo(IMMDevice *device, Quartz_DeviceInfo *
 
 	memset(info, 0, sizeof(Quartz_DeviceInfo));
 	info->api = QUARTZ_API_WASAPI;
+	info->type = type;
 
 	if (friendly_name.vt != VT_EMPTY)
 		WideCharToMultiByte(CP_UTF8, 0, friendly_name.pwszVal, -1, info->name, 256, NULL, NULL);
