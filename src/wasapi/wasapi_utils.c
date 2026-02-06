@@ -39,7 +39,7 @@ uint32_t wasapi_helperToActualBitDepth(Quartz_SampleFormat format)
 		0,
 		8,
 		16,
-		32,
+		24,
 		32,
 		32,
 	};
