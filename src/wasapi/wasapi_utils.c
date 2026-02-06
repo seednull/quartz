@@ -17,19 +17,102 @@ EDataFlow wasapi_helperToDataFlow(Quartz_DeviceType type)
 	return wasapi_flows[type];
 }
 
-uint32_t wasapi_helperToBitDepth(Quartz_SampleFormat format)
+uint32_t wasapi_helperToContainerBitDepth(Quartz_SampleFormat format)
 {
 	static uint32_t wasapi_bit_depths[] =
 	{
 		0,
 		8,
 		16,
-		24,
+		32,
 		32,
 		32,
 	};
 
 	return wasapi_bit_depths[format];
+}
+
+uint32_t wasapi_helperToActualBitDepth(Quartz_SampleFormat format)
+{
+	static uint32_t wasapi_bit_depths[] =
+	{
+		0,
+		8,
+		16,
+		32,
+		32,
+		32,
+	};
+
+	return wasapi_bit_depths[format];
+}
+
+DWORD wasapi_helperToSpeakerMask(Quartz_ChannelMapping mapping)
+{
+	static DWORD speakers[] =
+	{
+		// Unknown
+		0,
+
+		// Common
+		SPEAKER_FRONT_LEFT,
+		SPEAKER_FRONT_RIGHT,
+		SPEAKER_FRONT_CENTER,
+
+		SPEAKER_LOW_FREQUENCY,
+
+		SPEAKER_BACK_LEFT,
+		SPEAKER_BACK_RIGHT,
+		SPEAKER_FRONT_LEFT_OF_CENTER,
+		SPEAKER_FRONT_RIGHT_OF_CENTER,
+		SPEAKER_BACK_CENTER,
+
+		SPEAKER_SIDE_LEFT,
+		SPEAKER_SIDE_RIGHT,
+
+		SPEAKER_TOP_CENTER,
+		SPEAKER_TOP_FRONT_LEFT,
+		SPEAKER_TOP_FRONT_RIGHT,
+		SPEAKER_TOP_FRONT_CENTER,
+		SPEAKER_TOP_BACK_LEFT,
+		SPEAKER_TOP_BACK_RIGHT,
+		SPEAKER_TOP_BACK_CENTER,
+
+		// Aux
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+	};
+
+	return speakers[mapping];
+}
+
+GUID wasapi_helperToSubFormat(Quartz_SampleFormat format)
+{
+	static GUID subformats[] =
+	{
+		{0},
+		STATIC_KSDATAFORMAT_SUBTYPE_PCM,
+		STATIC_KSDATAFORMAT_SUBTYPE_PCM,
+		STATIC_KSDATAFORMAT_SUBTYPE_PCM,
+		STATIC_KSDATAFORMAT_SUBTYPE_PCM,
+		STATIC_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT,
+	};
+
+	return subformats[format];
 }
 
 Quartz_Result wasapi_helperFillDeviceInfo(IMMDevice *device, Quartz_DeviceType type, Quartz_DeviceInfo *info)

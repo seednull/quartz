@@ -32,7 +32,10 @@ typedef struct WASAPI_Buffer_t
 
 Quartz_Result wasapi_helperFillDeviceInfo(IMMDevice *device, Quartz_DeviceType type, Quartz_DeviceInfo *info);
 EDataFlow wasapi_helperToDataFlow(Quartz_DeviceType type);
-uint32_t wasapi_helperToBitDepth(Quartz_SampleFormat format);
+uint32_t wasapi_helperToContainerBitDepth(Quartz_SampleFormat format);
+uint32_t wasapi_helperToActualBitDepth(Quartz_SampleFormat format);
+DWORD wasapi_helperToSpeakerMask(Quartz_ChannelMapping mapping);
+GUID wasapi_helperToSubFormat(Quartz_SampleFormat format);
 
 Quartz_Result wasapi_fillDeviceInfo(Quartz_DeviceInfo *info);
 Quartz_Result wasapi_deviceInitialize(WASAPI_Device *device_ptr, WASAPI_Instance *instance_ptr, IMMDevice *wasapi_device, Quartz_DeviceType type);
