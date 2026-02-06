@@ -142,6 +142,30 @@ Quartz_Result quartzGetDeviceInfo(Quartz_Device device, Quartz_DeviceInfo *info)
 	return ptr->vtbl->getDeviceInfo(device, info);
 }
 
+Quartz_Result quartzGetPreferredFormat(Quartz_Device device, Quartz_DeviceFormat *format)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->getPreferredFormat);
+
+	return ptr->vtbl->getPreferredFormat(device, format);
+}
+
+Quartz_Result quartzEnumerateSupportedFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats)
+{
+	if (device == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_DEVICE;
+
+	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->enumerateSupportedFormats);
+
+	return ptr->vtbl->enumerateSupportedFormats(device, format_count, formats);
+}
+
 /*
  */
 Quartz_Result quartzCreateBuffer(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer)

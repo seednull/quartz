@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 // Constants
+#define QUARTZ_MAX_CHANNELS 32
 
 // Opaque handles
 QUARTZ_DEFINE_HANDLE(Quartz_Instance);
@@ -119,6 +120,54 @@ typedef enum Quartz_SampleRate_t
 	QUARTZ_SAMPLE_RATE_ENUM_FORCE32 = 0x7FFFFFFF,
 } Quartz_SampleRate;
 
+typedef enum Quartz_ChannelMapping_t
+{
+	QUARTZ_CHANNEL_MAPPING_UNKNOWN = 0,
+
+	QUARTZ_CHANNEL_MAPPING_FRONT_LEFT,
+	QUARTZ_CHANNEL_MAPPING_FRONT_RIGHT,
+	QUARTZ_CHANNEL_MAPPING_FRONT_CENTER,
+
+	QUARTZ_CHANNEL_MAPPING_LFE,
+
+	QUARTZ_CHANNEL_MAPPING_BACK_LEFT,
+	QUARTZ_CHANNEL_MAPPING_BACK_RIGHT,
+	QUARTZ_CHANNEL_MAPPING_FRONT_LEFT_OF_CENTER,
+	QUARTZ_CHANNEL_MAPPING_FRONT_RIGHT_OF_CENTER,
+	QUARTZ_CHANNEL_MAPPING_BACK_CENTER,
+
+	QUARTZ_CHANNEL_MAPPING_SIDE_LEFT,
+	QUARTZ_CHANNEL_MAPPING_SIDE_RIGHT,
+
+	QUARTZ_CHANNEL_MAPPING_TOP_CENTER,
+	QUARTZ_CHANNEL_MAPPING_TOP_FRONT_LEFT,
+	QUARTZ_CHANNEL_MAPPING_TOP_FRONT_RIGHT,
+	QUARTZ_CHANNEL_MAPPING_TOP_FRONT_CENTER,
+	QUARTZ_CHANNEL_MAPPING_TOP_BACK_LEFT,
+	QUARTZ_CHANNEL_MAPPING_TOP_BACK_RIGHT,
+	QUARTZ_CHANNEL_MAPPING_TOP_BACK_CENTER,
+
+	QUARTZ_CHANNEL_MAPPING_AUX0,
+	QUARTZ_CHANNEL_MAPPING_AUX1,
+	QUARTZ_CHANNEL_MAPPING_AUX2,
+	QUARTZ_CHANNEL_MAPPING_AUX3,
+	QUARTZ_CHANNEL_MAPPING_AUX4,
+	QUARTZ_CHANNEL_MAPPING_AUX5,
+	QUARTZ_CHANNEL_MAPPING_AUX6,
+	QUARTZ_CHANNEL_MAPPING_AUX7,
+	QUARTZ_CHANNEL_MAPPING_AUX8,
+	QUARTZ_CHANNEL_MAPPING_AUX9,
+	QUARTZ_CHANNEL_MAPPING_AUX10,
+	QUARTZ_CHANNEL_MAPPING_AUX11,
+	QUARTZ_CHANNEL_MAPPING_AUX12,
+	QUARTZ_CHANNEL_MAPPING_AUX13,
+	QUARTZ_CHANNEL_MAPPING_AUX14,
+	QUARTZ_CHANNEL_MAPPING_AUX15,
+
+	QUARTZ_CHANNEL_MAPPING_ENUM_MAX,
+	QUARTZ_CHANNEL_MAPPING_ENUM_FORCE32 = 0x7FFFFFFF,
+} Quartz_ChannelMapping;
+
 // Structs
 typedef struct Quartz_InstanceDesc_t
 {
@@ -135,13 +184,18 @@ typedef struct Quartz_DeviceInfo_t
 	Quartz_DeviceType type;
 } Quartz_DeviceInfo;
 
-typedef struct Quartz_BufferDesc_t
+typedef struct Quartz_DeviceFormat_t
 {
 	uint32_t sample_rate;
-	Quartz_SampleFormat format;
+	Quartz_SampleFormat sample_format;
+	uint32_t channel_count;
+	Quartz_ChannelMapping channel_mappings[QUARTZ_MAX_CHANNELS];
+} Quartz_DeviceFormat;
+
+typedef struct Quartz_BufferDesc_t
+{
+	Quartz_DeviceFormat format;
 	uint32_t duration_milliseconds;
-	uint32_t num_channels;
-	// TODO: channel mappings (1:0, 2:0, 2:1, 5:1, 5:2, 7:1)
 } Quartz_BufferDesc;
 
 // Function pointers
@@ -152,6 +206,8 @@ typedef Quartz_Result (*PFN_quartzCreateDefaultDevice)(Quartz_Instance instance,
 typedef Quartz_Result (*PFN_quartzDestroyInstance)(Quartz_Instance instance);
 
 typedef Quartz_Result (*PFN_quartzGetDeviceInfo)(Quartz_Device device, Quartz_DeviceInfo *info);
+typedef Quartz_Result (*PFN_quartzGetPreferredFormat)(Quartz_Device device, Quartz_DeviceFormat *format);
+typedef Quartz_Result (*PFN_quartzEnumerateSupportedFormats)(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
 
 typedef Quartz_Result (*PFN_quartzCreateBuffer)(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);
 
@@ -179,6 +235,9 @@ typedef struct Quartz_InstanceTable_t
 typedef struct Quartz_DeviceTable_t
 {
 	PFN_quartzGetDeviceInfo getDeviceInfo;
+	PFN_quartzGetPreferredFormat getPreferredFormat;
+	PFN_quartzEnumerateSupportedFormats enumerateSupportedFormats;
+
 	PFN_quartzCreateBuffer createBuffer;
 
 	PFN_quartzDestroyBuffer destroyBuffer;
@@ -205,6 +264,8 @@ QUARTZ_APIENTRY Quartz_Result quartzCreateDefaultDevice(Quartz_Instance instance
 QUARTZ_APIENTRY Quartz_Result quartzDestroyInstance(Quartz_Instance instance);
 
 QUARTZ_APIENTRY Quartz_Result quartzGetDeviceInfo(Quartz_Device device, Quartz_DeviceInfo *info);
+QUARTZ_APIENTRY Quartz_Result quartzGetPreferredFormat(Quartz_Device device, Quartz_DeviceFormat *format);
+QUARTZ_APIENTRY Quartz_Result quartzEnumerateSupportedFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
 
 QUARTZ_APIENTRY Quartz_Result quartzCreateBuffer(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);
 
