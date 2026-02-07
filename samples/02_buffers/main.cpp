@@ -6,8 +6,6 @@
 
 #include <iostream>
 
-#define INT24_MAX 8388607i32
-
 static void testBuffers(Quartz_Device device)
 {
 	Quartz_Buffer buffer = QUARTZ_NULL_HANDLE;
@@ -56,14 +54,11 @@ static void testBuffers(Quartz_Device device)
 
 		for (uint32_t i = 0; i < frame_count; ++i)
 		{
-			float osc1 = static_cast<float>(sin(phase1) * amp);
-			float osc2 = static_cast<float>(sin(phase2) * amp);
+			frames[2 * i + 0] = static_cast<float>(sin(phase1) * amp);
+			frames[2 * i + 1] = static_cast<float>(sin(phase2) * amp);
 
 			phase1 = fmod(phase1 + inc1, 2.0 * M_PI);
 			phase2 = fmod(phase2 + inc2, 2.0 * M_PI);
-
-			frames[2 * i + 0] = osc1;
-			frames[2 * i + 1] = osc2;
 		}
 
 		result = quartzEndRender(device, buffer, frame_count);
