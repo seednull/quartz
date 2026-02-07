@@ -59,13 +59,44 @@ static Quartz_Result wasapi_deviceGetPreferredFormat(Quartz_Device this, Quartz_
 	return QUARTZ_SUCCESS;
 }
 
-static Quartz_Result wasapi_deviceGetSupportedFormats(Quartz_Device this, uint32_t *format_count, Quartz_DeviceFormat *formats)
+static Quartz_Result wasapi_deviceGetCommonFormats(Quartz_Device this, uint32_t *format_count, Quartz_DeviceFormat *formats)
 {
 	QUARTZ_UNUSED(this);
 	QUARTZ_UNUSED(format_count);
 	QUARTZ_UNUSED(formats);
 
 	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result wasapi_deviceCheckFormatSupport(Quartz_Device this, const Quartz_DeviceFormat *format, uint32_t *supported)
+{
+	assert(this);
+	assert(format);
+	assert(supported);
+
+	WASAPI_Device *device_ptr = (WASAPI_Device *)this;
+	IMMDevice *wasapi_device = device_ptr->device;
+
+	IAudioClient *wasapi_client = NULL;
+	HRESULT hr = IMMDevice_Activate(wasapi_device, &IID_IAudioClient, CLSCTX_ALL, NULL, &wasapi_client);
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+
+	AUDCLNT_SHAREMODE share_mode = AUDCLNT_SHAREMODE_SHARED;
+
+	WAVEFORMATEXTENSIBLE wasapi_format = wasapi_helperToWaveFormatExtensible(format);
+	WAVEFORMATEXTENSIBLE *closest_match_format = NULL;
+	hr = IAudioClient_IsFormatSupported(wasapi_client, share_mode, (const WAVEFORMATEX *)&wasapi_format, (WAVEFORMATEX **)&closest_match_format);
+	IAudioClient_Release(wasapi_client);
+
+	if (closest_match_format)
+		CoTaskMemFree(closest_match_format);
+
+	if (!SUCCEEDED(hr))
+		return QUARTZ_WASAPI_ERROR;
+
+	*supported = (hr == S_OK);
+	return QUARTZ_SUCCESS;
 }
 
 /*
@@ -87,9 +118,9 @@ static Quartz_Result wasapi_deviceCreateBuffer(Quartz_Device this, const Quartz_
 
 	AUDCLNT_SHAREMODE share_mode = AUDCLNT_SHAREMODE_SHARED;
 
-	WAVEFORMATEXTENSIBLE format = wasapi_helperToWaveFormatExtensible(&desc->format);
+	WAVEFORMATEXTENSIBLE wasapi_format = wasapi_helperToWaveFormatExtensible(&desc->format);
 	WAVEFORMATEXTENSIBLE *closest_match_format = NULL;
-	hr = IAudioClient_IsFormatSupported(wasapi_client, share_mode, (const WAVEFORMATEX *)&format, (WAVEFORMATEX **)&closest_match_format);
+	hr = IAudioClient_IsFormatSupported(wasapi_client, share_mode, (const WAVEFORMATEX *)&wasapi_format, (WAVEFORMATEX **)&closest_match_format);
 
 	if (closest_match_format)
 		CoTaskMemFree(closest_match_format);
@@ -108,7 +139,7 @@ static Quartz_Result wasapi_deviceCreateBuffer(Quartz_Device this, const Quartz_
 
 	REFERENCE_TIME duration = desc->duration_milliseconds * 10000;
 
-	hr = IAudioClient_Initialize(wasapi_client, share_mode, 0, duration, 0, (const WAVEFORMATEX *)&format, NULL);
+	hr = IAudioClient_Initialize(wasapi_client, share_mode, 0, duration, 0, (const WAVEFORMATEX *)&wasapi_format, NULL);
 	if (!SUCCEEDED(hr))
 	{
 		IAudioClient_Release(wasapi_client);
@@ -340,7 +371,8 @@ static Quartz_DeviceTable device_vtbl =
 {
 	wasapi_deviceGetInfo,
 	wasapi_deviceGetPreferredFormat,
-	wasapi_deviceGetSupportedFormats,
+	wasapi_deviceGetCommonFormats,
+	wasapi_deviceCheckFormatSupport,
 
 	wasapi_deviceCreateBuffer,
 
