@@ -16,6 +16,13 @@ static void testBuffers(Quartz_Device device)
 	Quartz_Result result = quartzGetPreferredFormat(device, &preferred_format);
 	assert(result == QUARTZ_SUCCESS);
 
+	uint32_t supported = 0;
+	preferred_format.sample_format = QUARTZ_SAMPLE_FORMAT_FLOAT32;
+
+	result = quartzCheckFormatSupport(device, &preferred_format, &supported);
+	assert(result == QUARTZ_SUCCESS);
+	assert(supported);
+
 	Quartz_BufferDesc desc =
 	{
 		preferred_format,
@@ -28,7 +35,7 @@ static void testBuffers(Quartz_Device device)
 	result = quartzStart(device, buffer);
 	assert(result == QUARTZ_SUCCESS);
 
-	void *frames = nullptr;
+	float *frames = nullptr;
 	uint32_t frame_count = 0;
 
 	double phase1 = 0.0;
@@ -41,7 +48,7 @@ static void testBuffers(Quartz_Device device)
 
 	while (true)
 	{
-		result = quartzBeginRender(device, buffer, &frames, &frame_count);
+		result = quartzBeginRender(device, buffer, reinterpret_cast<void **>(&frames), &frame_count);
 		assert(result == QUARTZ_SUCCESS);
 
 		if (frame_count > 0)
@@ -55,53 +62,8 @@ static void testBuffers(Quartz_Device device)
 			phase1 = fmod(phase1 + inc1, 2.0 * M_PI);
 			phase2 = fmod(phase2 + inc2, 2.0 * M_PI);
 
-			switch (preferred_format.sample_format)
-			{
-				case QUARTZ_SAMPLE_FORMAT_UINT8:
-				{
-					uint8_t *typed_frames = reinterpret_cast<uint8_t *>(frames);
-
-					typed_frames[2 * i + 0] = static_cast<uint8_t>((osc1 * 0.5f + 0.5f) * UINT8_MAX);
-					typed_frames[2 * i + 1] = static_cast<uint8_t>((osc2 * 0.5f + 0.5f) * UINT8_MAX);
-				}
-				break;
-
-				case QUARTZ_SAMPLE_FORMAT_SINT16:
-				{
-					int16_t *typed_frames = reinterpret_cast<int16_t *>(frames);
-
-					typed_frames[2 * i + 0] = static_cast<int16_t>(osc1 * INT16_MAX);
-					typed_frames[2 * i + 1] = static_cast<int16_t>(osc2 * INT16_MAX);
-				}
-				break;
-
-				case QUARTZ_SAMPLE_FORMAT_SINT24:
-				{
-					int32_t *typed_frames = reinterpret_cast<int32_t *>(frames);
-
-					typed_frames[2 * i + 0] = static_cast<int32_t>(osc1 * INT24_MAX);
-					typed_frames[2 * i + 1] = static_cast<int32_t>(osc2 * INT24_MAX);
-				}
-				break;
-
-				case QUARTZ_SAMPLE_FORMAT_SINT32:
-				{
-					int32_t *typed_frames = reinterpret_cast<int32_t *>(frames);
-
-					typed_frames[2 * i + 0] = static_cast<int32_t>(osc1 * INT32_MAX);
-					typed_frames[2 * i + 1] = static_cast<int32_t>(osc2 * INT32_MAX);
-				}
-				break;
-
-				case QUARTZ_SAMPLE_FORMAT_FLOAT32:
-				{
-					float *typed_frames = reinterpret_cast<float *>(frames);
-
-					typed_frames[2 * i + 0] = osc1;
-					typed_frames[2 * i + 1] = osc2;
-				}
-				break;
-			}
+			frames[2 * i + 0] = osc1;
+			frames[2 * i + 1] = osc2;
 		}
 
 		result = quartzEndRender(device, buffer, frame_count);
