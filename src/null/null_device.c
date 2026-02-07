@@ -25,11 +25,20 @@ static Quartz_Result null_deviceGetPreferredFormat(Quartz_Device this, Quartz_De
 	return QUARTZ_NOT_SUPPORTED;
 }
 
-static Quartz_Result null_deviceGetSupportedFormats(Quartz_Device this, uint32_t *format_count, Quartz_DeviceFormat *formats)
+static Quartz_Result null_deviceGetCommonFormats(Quartz_Device this, uint32_t *format_count, Quartz_DeviceFormat *formats)
 {
 	QUARTZ_UNUSED(this);
 	QUARTZ_UNUSED(format_count);
 	QUARTZ_UNUSED(formats);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+static Quartz_Result null_deviceCheckFormatSupport(Quartz_Device this, const Quartz_DeviceFormat *format, uint32_t *supported)
+{
+	QUARTZ_UNUSED(this);
+	QUARTZ_UNUSED(format);
+	QUARTZ_UNUSED(supported);
 
 	return QUARTZ_NOT_SUPPORTED;
 }
@@ -127,7 +136,8 @@ static Quartz_DeviceTable device_vtbl =
 {
 	null_deviceGetInfo,
 	null_deviceGetPreferredFormat,
-	null_deviceGetSupportedFormats,
+	null_deviceGetCommonFormats,
+	null_deviceCheckFormatSupport,
 
 	null_deviceCreateBuffer,
 
