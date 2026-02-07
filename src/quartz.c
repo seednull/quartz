@@ -154,16 +154,16 @@ Quartz_Result quartzGetPreferredFormat(Quartz_Device device, Quartz_DeviceFormat
 	return ptr->vtbl->getPreferredFormat(device, format);
 }
 
-Quartz_Result quartzEnumerateSupportedFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats)
+Quartz_Result quartzGetSupportedFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats)
 {
 	if (device == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_DEVICE;
 
 	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
 	assert(ptr->vtbl);
-	assert(ptr->vtbl->enumerateSupportedFormats);
+	assert(ptr->vtbl->getSupportedFormats);
 
-	return ptr->vtbl->enumerateSupportedFormats(device, format_count, formats);
+	return ptr->vtbl->getSupportedFormats(device, format_count, formats);
 }
 
 /*

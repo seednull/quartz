@@ -22,16 +22,16 @@
 #endif
 
 #if defined(QUARTZ_SHARED_LIBRARY)
-	#define QUARTZ_APIENTRY QUARTZ_EXPORT extern
+	#define QUARTZ_APIENTRY extern QUARTZ_EXPORT
 #else
-	#define QUARTZ_APIENTRY QUARTZ_IMPORT extern
+	#define QUARTZ_APIENTRY extern QUARTZ_IMPORT
 #endif
 
 #if !defined(QUARTZ_NULL_HANDLE)
 	#define QUARTZ_NULL_HANDLE 0
 #endif
 
-#define QUARTZ_DEFINE_HANDLE(TYPE) typedef uint64_t TYPE;
+#define QUARTZ_DEFINE_HANDLE(TYPE) typedef uint64_t TYPE
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +54,7 @@ typedef enum Quartz_Result_t
 	QUARTZ_INVALID_INSTANCE,
 	QUARTZ_INVALID_DEVICE,
 	QUARTZ_INVALID_DEVICE_INDEX,
-	QUARTZ_INVALID_BUFFER_FORMAT,
+	QUARTZ_DEVICE_FORMAT_NOT_SUPPORTED,
 
 	// FIXME: add more error codes for internal errors
 	QUARTZ_INTERNAL_ERROR,
@@ -207,7 +207,7 @@ typedef Quartz_Result (*PFN_quartzDestroyInstance)(Quartz_Instance instance);
 
 typedef Quartz_Result (*PFN_quartzGetDeviceInfo)(Quartz_Device device, Quartz_DeviceInfo *info);
 typedef Quartz_Result (*PFN_quartzGetPreferredFormat)(Quartz_Device device, Quartz_DeviceFormat *format);
-typedef Quartz_Result (*PFN_quartzEnumerateSupportedFormats)(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
+typedef Quartz_Result (*PFN_quartzGetSupportedFormats)(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
 
 typedef Quartz_Result (*PFN_quartzCreateBuffer)(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);
 
@@ -236,7 +236,7 @@ typedef struct Quartz_DeviceTable_t
 {
 	PFN_quartzGetDeviceInfo getDeviceInfo;
 	PFN_quartzGetPreferredFormat getPreferredFormat;
-	PFN_quartzEnumerateSupportedFormats enumerateSupportedFormats;
+	PFN_quartzGetSupportedFormats getSupportedFormats;
 
 	PFN_quartzCreateBuffer createBuffer;
 
@@ -265,7 +265,7 @@ QUARTZ_APIENTRY Quartz_Result quartzDestroyInstance(Quartz_Instance instance);
 
 QUARTZ_APIENTRY Quartz_Result quartzGetDeviceInfo(Quartz_Device device, Quartz_DeviceInfo *info);
 QUARTZ_APIENTRY Quartz_Result quartzGetPreferredFormat(Quartz_Device device, Quartz_DeviceFormat *format);
-QUARTZ_APIENTRY Quartz_Result quartzEnumerateSupportedFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
+QUARTZ_APIENTRY Quartz_Result quartzGetSupportedFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
 
 QUARTZ_APIENTRY Quartz_Result quartzCreateBuffer(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);
 
