@@ -9,7 +9,7 @@ static QUARTZ_INLINE double quartz_clamp(double value, double min, double max)
 	return (value > max) ? max : (value < min) ? min : value;
 }
 
-static QUARTZ_INLINE uint32_t quartz_min(uint32_t a, uint32_t b)
+static QUARTZ_INLINE uint64_t quartz_min(uint64_t a, uint64_t b)
 {
 	return (a < b) ? a : b;
 }
@@ -19,14 +19,14 @@ static QUARTZ_INLINE float quartz_lerp(float a, float b, float t)
 	return a + t * (b - a);
 }
 
-static QUARTZ_INLINE float quartz_readSample(const void *frames, uint32_t frame, uint32_t channel_count, uint32_t channel, Quartz_SampleFormat format)
+static QUARTZ_INLINE float quartz_readSample(const void *frames, uint64_t frame, uint32_t channel_count, uint32_t channel, Quartz_SampleFormat format)
 {
 	assert(frames);
 	assert(channel_count > 0);
 	assert(channel < channel_count);
 	assert(format != QUARTZ_SAMPLE_FORMAT_UNKNOWN);
 
-	uint32_t index = frame * channel_count + channel;
+	uint64_t index = frame * channel_count + channel;
 
 	switch (format)
 	{
@@ -64,14 +64,14 @@ static QUARTZ_INLINE float quartz_readSample(const void *frames, uint32_t frame,
 	}
 }
 
-static QUARTZ_INLINE void quartz_writeSample(void *frames, uint32_t frame, uint32_t channel_count, uint32_t channel, Quartz_SampleFormat format, float value)
+static QUARTZ_INLINE void quartz_writeSample(void *frames, uint64_t frame, uint32_t channel_count, uint32_t channel, Quartz_SampleFormat format, float value)
 {
 	assert(frames);
 	assert(channel_count > 0);
 	assert(channel < channel_count);
 	assert(format != QUARTZ_SAMPLE_FORMAT_UNKNOWN);
 
-	uint32_t index = frame * channel_count + channel;
+	uint64_t index = frame * channel_count + channel;
 
 	switch (format)
 	{
@@ -111,7 +111,7 @@ static QUARTZ_INLINE void quartz_writeSample(void *frames, uint32_t frame, uint3
 
 /*
  */
-static Quartz_Result common_resamplerLinearResampleFrames(Quartz_Resampler this, const void *src_frames, uint32_t src_frame_count, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written)
+static Quartz_Result common_resamplerLinearResampleFrames(Quartz_Resampler this, const void *src_frames, uint64_t src_frame_count, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written)
 {
 	assert(this);
 	assert(src_frames);
@@ -123,11 +123,11 @@ static Quartz_Result common_resamplerLinearResampleFrames(Quartz_Resampler this,
 	Common_Resampler *ptr = (Common_Resampler *)this;
 	uint32_t channel_count = ptr->channel_count;
 
-	for (uint32_t i = 0; i < dst_frame_count; ++i)
+	for (uint64_t i = 0; i < dst_frame_count; ++i)
 	{
 		double position = i * ptr->ratio;
-		uint32_t src_frame0 = (uint32_t)position;
-		uint32_t src_frame1 = quartz_min(src_frame0 + 1, src_frame_count - 1);
+		uint64_t src_frame0 = (uint64_t)position;
+		uint64_t src_frame1 = quartz_min(src_frame0 + 1, src_frame_count - 1);
 
 		assert(src_frame0 < src_frame_count);
 		assert(src_frame1 < src_frame_count);
@@ -158,7 +158,7 @@ static Quartz_Result common_resamplerLinearResampleFrames(Quartz_Resampler this,
 	return QUARTZ_SUCCESS;
 }
 
-static Quartz_Result common_resamplerLinearFlushRemainingFrames(Quartz_Resampler this, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written)
+static Quartz_Result common_resamplerLinearFlushRemainingFrames(Quartz_Resampler this, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written)
 {
 	QUARTZ_UNUSED(this);
 	QUARTZ_UNUSED(dst_frames);
@@ -169,7 +169,7 @@ static Quartz_Result common_resamplerLinearFlushRemainingFrames(Quartz_Resampler
 	return QUARTZ_SUCCESS;
 }
 
-static Quartz_Result common_resamplerLinearCalculateSourceFrameCount(Quartz_Resampler this, uint32_t dst_frame_count, uint32_t *src_frame_count)
+static Quartz_Result common_resamplerLinearCalculateSourceFrameCount(Quartz_Resampler this, uint64_t dst_frame_count, uint64_t *src_frame_count)
 {
 	assert(this);
 	assert(dst_frame_count > 0);
@@ -177,11 +177,11 @@ static Quartz_Result common_resamplerLinearCalculateSourceFrameCount(Quartz_Resa
 
 	Common_Resampler *ptr = (Common_Resampler *)this;
 
-	*src_frame_count = (uint32_t)round(dst_frame_count * ptr->ratio);
+	*src_frame_count = (uint64_t)round(dst_frame_count * ptr->ratio);
 	return QUARTZ_SUCCESS;
 }
 
-static Quartz_Result common_resamplerLinearCalculateDestinationFrameCount(Quartz_Resampler this, uint32_t src_frame_count, uint32_t *dst_frame_count)
+static Quartz_Result common_resamplerLinearCalculateDestinationFrameCount(Quartz_Resampler this, uint64_t src_frame_count, uint64_t *dst_frame_count)
 {
 	assert(this);
 	assert(src_frame_count > 0);
@@ -189,7 +189,7 @@ static Quartz_Result common_resamplerLinearCalculateDestinationFrameCount(Quartz
 
 	Common_Resampler *ptr = (Common_Resampler *)this;
 
-	*dst_frame_count = (uint32_t)round(src_frame_count * ptr->iratio);
+	*dst_frame_count = (uint64_t)round(src_frame_count * ptr->iratio);
 	return QUARTZ_SUCCESS;
 }
 

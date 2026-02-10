@@ -210,10 +210,10 @@ typedef struct Quartz_BufferDesc_t
 } Quartz_BufferDesc;
 
 // Function pointers
-typedef Quartz_Result (*PFN_quartzResampleFrames)(Quartz_Resampler resampler, const void *src_frames, uint32_t src_frame_count, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
-typedef Quartz_Result (*PFN_quartzFlushRemainingFrames)(Quartz_Resampler resampler, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
-typedef Quartz_Result (*PFN_quartzCalculateSourceFrameCount)(Quartz_Resampler resampler, uint32_t dst_frame_count, uint32_t *src_frame_count);
-typedef Quartz_Result (*PFN_quartzCalculateDestinationFrameCount)(Quartz_Resampler resampler, uint32_t src_frame_count, uint32_t *dst_frame_count);
+typedef Quartz_Result (*PFN_quartzResampleFrames)(Quartz_Resampler resampler, const void *src_frames, uint64_t src_frame_count, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written);
+typedef Quartz_Result (*PFN_quartzFlushRemainingFrames)(Quartz_Resampler resampler, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written);
+typedef Quartz_Result (*PFN_quartzCalculateSourceFrameCount)(Quartz_Resampler resampler, uint64_t dst_frame_count, uint64_t *src_frame_count);
+typedef Quartz_Result (*PFN_quartzCalculateDestinationFrameCount)(Quartz_Resampler resampler, uint64_t src_frame_count, uint64_t *dst_frame_count);
 
 typedef Quartz_Result (*PFN_quartzDestroyResampler)(Quartz_Resampler resampler);
 
@@ -286,10 +286,10 @@ typedef struct Quartz_DeviceTable_t
 QUARTZ_APIENTRY Quartz_Result quartzCreateResampler(const Quartz_ResamplerDesc *desc, Quartz_Resampler *resampler);
 QUARTZ_APIENTRY Quartz_Result quartzGetResamplerTable(Quartz_Resampler resampler, Quartz_ResamplerTable *resampler_table);
 
-QUARTZ_APIENTRY Quartz_Result quartzResampleFrames(Quartz_Resampler resampler, const void *src_frames, uint32_t src_frame_count, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
-QUARTZ_APIENTRY Quartz_Result quartzFlushRemainingFrames(Quartz_Resampler resampler, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
-QUARTZ_APIENTRY Quartz_Result quartzCalculateSourceFrameCount(Quartz_Resampler resampler, uint32_t dst_frame_count, uint32_t *src_frame_count);
-QUARTZ_APIENTRY Quartz_Result quartzCalculateDestinationFrameCount(Quartz_Resampler resampler, uint32_t src_frame_count, uint32_t *dst_frame_count);
+QUARTZ_APIENTRY Quartz_Result quartzResampleFrames(Quartz_Resampler resampler, const void *src_frames, uint64_t src_frame_count, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written);
+QUARTZ_APIENTRY Quartz_Result quartzFlushRemainingFrames(Quartz_Resampler resampler, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written);
+QUARTZ_APIENTRY Quartz_Result quartzCalculateSourceFrameCount(Quartz_Resampler resampler, uint64_t dst_frame_count, uint64_t *src_frame_count);
+QUARTZ_APIENTRY Quartz_Result quartzCalculateDestinationFrameCount(Quartz_Resampler resampler, uint64_t src_frame_count, uint64_t *dst_frame_count);
 
 QUARTZ_APIENTRY Quartz_Result quartzDestroyResampler(Quartz_Resampler resampler);
 

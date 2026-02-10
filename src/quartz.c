@@ -42,7 +42,7 @@ Quartz_Result quartzGetResamplerTable(Quartz_Resampler resampler, Quartz_Resampl
 	return QUARTZ_SUCCESS;
 }
 
-Quartz_Result quartzResampleFrames(Quartz_Resampler resampler, const void *src_frames, uint32_t src_frame_count, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written)
+Quartz_Result quartzResampleFrames(Quartz_Resampler resampler, const void *src_frames, uint64_t src_frame_count, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written)
 {
 	if (resampler == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_RESAMPLER;
@@ -54,7 +54,7 @@ Quartz_Result quartzResampleFrames(Quartz_Resampler resampler, const void *src_f
 	return ptr->vtbl->resampleFrames(resampler, src_frames, src_frame_count, dst_frames, dst_frame_count, frames_written);
 }
 
-Quartz_Result quartzFlushRemainingFrames(Quartz_Resampler resampler, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written)
+Quartz_Result quartzFlushRemainingFrames(Quartz_Resampler resampler, void *dst_frames, uint64_t dst_frame_count, uint64_t *frames_written)
 {
 	if (resampler == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_RESAMPLER;
@@ -66,7 +66,7 @@ Quartz_Result quartzFlushRemainingFrames(Quartz_Resampler resampler, void *dst_f
 	return ptr->vtbl->flushRemainingFrames(resampler, dst_frames, dst_frame_count, frames_written);
 }
 
-Quartz_Result quartzCalculateSourceFrameCount(Quartz_Resampler resampler, uint32_t dst_frame_count, uint32_t *src_frame_count)
+Quartz_Result quartzCalculateSourceFrameCount(Quartz_Resampler resampler, uint64_t dst_frame_count, uint64_t *src_frame_count)
 {
 	if (resampler == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_RESAMPLER;
@@ -78,7 +78,7 @@ Quartz_Result quartzCalculateSourceFrameCount(Quartz_Resampler resampler, uint32
 	return ptr->vtbl->calculateSourceFrameCount(resampler, dst_frame_count, src_frame_count);
 }
 
-Quartz_Result quartzCalculateDestinationFrameCount(Quartz_Resampler resampler, uint32_t src_frame_count, uint32_t *dst_frame_count)
+Quartz_Result quartzCalculateDestinationFrameCount(Quartz_Resampler resampler, uint64_t src_frame_count, uint64_t *dst_frame_count)
 {
 	if (resampler == QUARTZ_NULL_HANDLE)
 		return QUARTZ_INVALID_RESAMPLER;
