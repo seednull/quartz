@@ -6,7 +6,7 @@
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 
-#include "common/pool.h"
+#include "utils/pool.h"
 
 typedef struct WASAPI_Instance_t
 {

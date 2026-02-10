@@ -42,6 +42,7 @@ extern "C" {
 
 // Opaque handles
 QUARTZ_DEFINE_HANDLE(Quartz_Instance);
+QUARTZ_DEFINE_HANDLE(Quartz_Resampler);
 QUARTZ_DEFINE_HANDLE(Quartz_Device);
 QUARTZ_DEFINE_HANDLE(Quartz_Buffer);
 
@@ -51,6 +52,7 @@ typedef enum Quartz_Result_t
 	QUARTZ_SUCCESS = 0,
 	QUARTZ_NOT_SUPPORTED,
 	QUARTZ_INVALID_OUTPUT_ARGUMENT,
+	QUARTZ_INVALID_RESAMPLER,
 	QUARTZ_INVALID_INSTANCE,
 	QUARTZ_INVALID_DEVICE,
 	QUARTZ_INVALID_DEVICE_INDEX,
@@ -177,6 +179,15 @@ typedef struct Quartz_InstanceDesc_t
 	uint32_t engine_version;
 } Quartz_InstanceDesc;
 
+typedef struct Quartz_ResamplerDesc_t
+{
+	uint32_t src_sample_rate;
+	uint32_t dst_sample_rate;
+	Quartz_SampleFormat src_sample_format;
+	Quartz_SampleFormat dst_sample_format;
+	uint32_t channel_count;
+} Quartz_ResamplerDesc;
+
 typedef struct Quartz_DeviceInfo_t
 {
 	char name[256];
@@ -199,6 +210,13 @@ typedef struct Quartz_BufferDesc_t
 } Quartz_BufferDesc;
 
 // Function pointers
+typedef Quartz_Result (*PFN_quartzResampleFrames)(Quartz_Resampler resampler, const void *src_frames, uint32_t src_frame_count, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
+typedef Quartz_Result (*PFN_quartzFlushRemainingFrames)(Quartz_Resampler resampler, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
+typedef Quartz_Result (*PFN_quartzCalculateSourceFrameCount)(Quartz_Resampler resampler, uint32_t dst_frame_count, uint32_t *src_frame_count);
+typedef Quartz_Result (*PFN_quartzCalculateDestinationFrameCount)(Quartz_Resampler resampler, uint32_t src_frame_count, uint32_t *dst_frame_count);
+
+typedef Quartz_Result (*PFN_quartzDestroyResampler)(Quartz_Resampler resampler);
+
 typedef Quartz_Result (*PFN_quartzEnumerateDevices)(Quartz_Instance instance, Quartz_DeviceType type, uint32_t *device_count, Quartz_DeviceInfo *infos);
 typedef Quartz_Result (*PFN_quartzCreateDevice)(Quartz_Instance instance, Quartz_DeviceType type, uint32_t index, Quartz_Device *device);
 typedef Quartz_Result (*PFN_quartzCreateDefaultDevice)(Quartz_Instance instance, Quartz_DeviceType type, Quartz_Device *device);
@@ -223,6 +241,16 @@ typedef Quartz_Result (*PFN_quartzEndRender)(Quartz_Device device, Quartz_Buffer
 
 typedef Quartz_Result (*PFN_quartzBeginCapture)(Quartz_Device device, Quartz_Buffer buffer, void **ptr, uint32_t *frame_count);
 typedef Quartz_Result (*PFN_quartzEndCapture)(Quartz_Device device, Quartz_Buffer buffer, uint32_t frames_read);
+
+typedef struct Quartz_ResamplerTable_t
+{
+	PFN_quartzResampleFrames resampleFrames;
+	PFN_quartzFlushRemainingFrames flushRemainingFrames;
+	PFN_quartzCalculateSourceFrameCount calculateSourceFrameCount;
+	PFN_quartzCalculateDestinationFrameCount calculateDestinationFrameCount;
+
+	PFN_quartzDestroyResampler destroyResampler;
+} Quartz_ResamplerTable;
 
 typedef struct Quartz_InstanceTable_t
 {
@@ -255,6 +283,16 @@ typedef struct Quartz_DeviceTable_t
 
 // API
 #if !defined(QUARTZ_NO_PROTOTYPES)
+QUARTZ_APIENTRY Quartz_Result quartzCreateResampler(const Quartz_ResamplerDesc *desc, Quartz_Resampler *resampler);
+QUARTZ_APIENTRY Quartz_Result quartzGetResamplerTable(Quartz_Resampler resampler, Quartz_ResamplerTable *resampler_table);
+
+QUARTZ_APIENTRY Quartz_Result quartzResampleFrames(Quartz_Resampler resampler, const void *src_frames, uint32_t src_frame_count, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
+QUARTZ_APIENTRY Quartz_Result quartzFlushRemainingFrames(Quartz_Resampler resampler, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written);
+QUARTZ_APIENTRY Quartz_Result quartzCalculateSourceFrameCount(Quartz_Resampler resampler, uint32_t dst_frame_count, uint32_t *src_frame_count);
+QUARTZ_APIENTRY Quartz_Result quartzCalculateDestinationFrameCount(Quartz_Resampler resampler, uint32_t src_frame_count, uint32_t *dst_frame_count);
+
+QUARTZ_APIENTRY Quartz_Result quartzDestroyResampler(Quartz_Resampler resampler);
+
 QUARTZ_APIENTRY Quartz_Result quartzCreateInstance(Quartz_Api api, const Quartz_InstanceDesc *desc, Quartz_Instance *instance);
 QUARTZ_APIENTRY Quartz_Result quartzGetInstanceTable(Quartz_Instance instance, Quartz_InstanceTable *instance_table);
 QUARTZ_APIENTRY Quartz_Result quartzGetDeviceTable(Quartz_Device device, Quartz_DeviceTable *device_table);

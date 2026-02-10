@@ -5,6 +5,11 @@
 
 /*
  */
+typedef struct Quartz_ResamplerInternal_t
+{
+	Quartz_ResamplerTable *vtbl;
+} Quartz_ResamplerInternal;
+
 typedef struct Quartz_InstanceInternal_t
 {
 	Quartz_InstanceTable *vtbl;
@@ -14,6 +19,88 @@ typedef struct Quartz_DeviceInternal_t
 {
 	Quartz_DeviceTable *vtbl;
 } Quartz_DeviceInternal;
+
+/*
+ */
+Quartz_Result quartzCreateResampler(const Quartz_ResamplerDesc *desc, Quartz_Resampler *resampler)
+{
+	return common_createResampler(desc, resampler);
+}
+
+Quartz_Result quartzGetResamplerTable(Quartz_Resampler resampler, Quartz_ResamplerTable *resampler_table)
+{
+	if (resampler == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_RESAMPLER;
+
+	if (resampler_table == NULL)
+		return QUARTZ_INVALID_OUTPUT_ARGUMENT;
+
+	Quartz_ResamplerInternal *ptr = (Quartz_ResamplerInternal *)resampler;
+	assert(ptr->vtbl);
+
+	memcpy(resampler_table, ptr->vtbl, sizeof(Quartz_ResamplerTable));
+	return QUARTZ_SUCCESS;
+}
+
+Quartz_Result quartzResampleFrames(Quartz_Resampler resampler, const void *src_frames, uint32_t src_frame_count, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written)
+{
+	if (resampler == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_RESAMPLER;
+
+	Quartz_ResamplerInternal *ptr = (Quartz_ResamplerInternal *)resampler;
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->resampleFrames);
+
+	return ptr->vtbl->resampleFrames(resampler, src_frames, src_frame_count, dst_frames, dst_frame_count, frames_written);
+}
+
+Quartz_Result quartzFlushRemainingFrames(Quartz_Resampler resampler, void *dst_frames, uint32_t dst_frame_count, uint32_t *frames_written)
+{
+	if (resampler == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_RESAMPLER;
+
+	Quartz_ResamplerInternal *ptr = (Quartz_ResamplerInternal *)resampler;
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->flushRemainingFrames);
+
+	return ptr->vtbl->flushRemainingFrames(resampler, dst_frames, dst_frame_count, frames_written);
+}
+
+Quartz_Result quartzCalculateSourceFrameCount(Quartz_Resampler resampler, uint32_t dst_frame_count, uint32_t *src_frame_count)
+{
+	if (resampler == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_RESAMPLER;
+
+	Quartz_ResamplerInternal *ptr = (Quartz_ResamplerInternal *)resampler;
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->calculateSourceFrameCount);
+
+	return ptr->vtbl->calculateSourceFrameCount(resampler, dst_frame_count, src_frame_count);
+}
+
+Quartz_Result quartzCalculateDestinationFrameCount(Quartz_Resampler resampler, uint32_t src_frame_count, uint32_t *dst_frame_count)
+{
+	if (resampler == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_RESAMPLER;
+
+	Quartz_ResamplerInternal *ptr = (Quartz_ResamplerInternal *)resampler;
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->calculateDestinationFrameCount);
+
+	return ptr->vtbl->calculateDestinationFrameCount(resampler, src_frame_count, dst_frame_count);
+}
+
+Quartz_Result quartzDestroyResampler(Quartz_Resampler resampler)
+{
+	if (resampler == QUARTZ_NULL_HANDLE)
+		return QUARTZ_INVALID_RESAMPLER;
+
+	Quartz_ResamplerInternal *ptr = (Quartz_ResamplerInternal *)resampler;
+	assert(ptr->vtbl);
+	assert(ptr->vtbl->destroyResampler);
+
+	return ptr->vtbl->destroyResampler(resampler);
+}
 
 /*
  */
