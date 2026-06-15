@@ -24,7 +24,7 @@ typedef struct Quartz_DeviceInternal_t
  */
 Quartz_Result quartzCreateResampler(const Quartz_ResamplerDesc *desc, Quartz_Resampler *resampler)
 {
-	return common_createResampler(desc, resampler);
+	return common_quartzCreateResampler(desc, resampler);
 }
 
 Quartz_Result quartzGetResamplerTable(Quartz_Resampler resampler, Quartz_ResamplerTable *resampler_table)
@@ -108,9 +108,9 @@ Quartz_Result quartzCreateInstance(Quartz_Api api, const Quartz_InstanceDesc *de
 {
 	switch (api)
 	{
-		case QUARTZ_API_WASAPI: return wasapi_createInstance(desc, instance);
-		case QUARTZ_API_DIRECTSOUND: return directsound_createInstance(desc, instance);
-		case QUARTZ_API_NULL: return null_createInstance(desc, instance);
+		case QUARTZ_API_WASAPI: return wasapi_quartzCreateInstance(desc, instance);
+		case QUARTZ_API_DIRECTSOUND: return directsound_quartzCreateInstance(desc, instance);
+		case QUARTZ_API_NULL: return null_quartzCreateInstance(desc, instance);
 
 		case QUARTZ_API_AUTO:
 		{
@@ -118,12 +118,12 @@ Quartz_Result quartzCreateInstance(Quartz_Api api, const Quartz_InstanceDesc *de
 
 #if QUARTZ_BACKEND_WASAPI
 			if (result != QUARTZ_SUCCESS)
-				result = wasapi_createInstance(desc, instance);
+				result = wasapi_quartzCreateInstance(desc, instance);
 #endif
 
 #if QUARTZ_BACKEND_DIRECTSOUND
 			if (result != QUARTZ_SUCCESS)
-				result = directsound_createInstance(desc, instance);
+				result = directsound_quartzCreateInstance(desc, instance);
 #endif
 
 			return result;

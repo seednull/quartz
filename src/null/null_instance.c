@@ -95,7 +95,7 @@ static Quartz_InstanceTable instance_vtbl =
 
 /*
  */
-Quartz_Result null_createInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance)
+Quartz_Result null_quartzCreateInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance)
 {
 	assert(desc);
 	assert(instance);

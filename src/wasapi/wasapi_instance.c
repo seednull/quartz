@@ -173,7 +173,7 @@ static Quartz_InstanceTable instance_vtbl =
 
 /*
  */
-Quartz_Result wasapi_createInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance)
+Quartz_Result wasapi_quartzCreateInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance)
 {
 	assert(desc);
 	assert(instance);

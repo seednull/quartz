@@ -218,7 +218,7 @@ static Quartz_ResamplerTable resampler_linear_vtbl =
 
 /*
  */
-Quartz_Result common_createResampler(const Quartz_ResamplerDesc *desc, Quartz_Resampler *resampler)
+Quartz_Result common_quartzCreateResampler(const Quartz_ResamplerDesc *desc, Quartz_Resampler *resampler)
 {
 	assert(desc);
 	assert(desc->src_sample_rate > 0);
