@@ -49,24 +49,7 @@ static Quartz_Result null_instanceCreateDevice(Quartz_Instance this, Quartz_Devi
 
 static Quartz_Result null_instanceCreateDefaultDevice(Quartz_Instance this, Quartz_DeviceType type, Quartz_Device *device)
 {
-	assert(this);
-	assert(device);
-
-	QUARTZ_UNUSED(type);
-
-	Null_Instance *instance_ptr = (Null_Instance *)this;
-	Null_Device *device_ptr = (Null_Device *)malloc(sizeof(Null_Device));
-	assert(device_ptr);
-
-	Quartz_Result result = null_deviceInitialize(device_ptr, instance_ptr, type);
-	if (result != QUARTZ_SUCCESS)
-	{
-		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
-		return result;
-	}
-
-	*device = (Quartz_Device)device_ptr;
-	return QUARTZ_SUCCESS;
+	return null_instanceCreateDevice(this, type, 0, device);
 }
 
 static Quartz_Result null_instanceDestroy(Quartz_Instance this)
