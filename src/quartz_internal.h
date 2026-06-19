@@ -7,4 +7,5 @@
 Quartz_Result common_quartzCreateResampler(const Quartz_ResamplerDesc *desc, Quartz_Resampler *resampler);
 Quartz_Result wasapi_quartzCreateInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance);
 Quartz_Result directsound_quartzCreateInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance);
+Quartz_Result webaudio_quartzCreateInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance);
 Quartz_Result null_quartzCreateInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance);

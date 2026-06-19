@@ -10,6 +10,7 @@ set(TARGET quartz)
 # ==================================================================================================
 set(QUARTZ_HAS_WASAPI FALSE)
 set(QUARTZ_HAS_DIRECTSOUND FALSE)
+set(QUARTZ_HAS_WEBAUDIO FALSE)
 set(QUARTZ_PLATFORM_DEFINES "")
 set(QUARTZ_TARGET_TYPE SHARED)
 
@@ -21,6 +22,7 @@ endif()
 
 
 if (EMSCRIPTEN)
+	set(QUARTZ_HAS_WEBAUDIO ${QUARTZ_BUILD_WITH_WEBAUDIO})
 	set(QUARTZ_PLATFORM_DEFINES QUARTZ_PLATFORM_WEB)
 	set(QUARTZ_TARGET_TYPE STATIC)
 endif()
@@ -78,6 +80,20 @@ if (QUARTZ_HAS_DIRECTSOUND)
 	list(APPEND QUARTZ_PLATFORM_DEFINES QUARTZ_BACKEND_DIRECTSOUND)
 endif()
 
+if (QUARTZ_HAS_WEBAUDIO)
+	file(GLOB WEBAUDIO_SOURCES
+		${CMAKE_CURRENT_SOURCE_DIR}/webaudio/*.c
+	)
+
+	file(GLOB WEBAUDIO_HEADERS
+		${CMAKE_CURRENT_SOURCE_DIR}/webaudio/*.h
+	)
+
+	list(APPEND SOURCES ${WEBAUDIO_SOURCES})
+	list(APPEND HEADERS ${WEBAUDIO_HEADERS})
+	list(APPEND QUARTZ_PLATFORM_DEFINES QUARTZ_BACKEND_WEBAUDIO)
+endif()
+
 # ==================================================================================================
 # Target
 # ==================================================================================================
@@ -107,6 +123,11 @@ target_compile_definitions(${TARGET} PRIVATE ${QUARTZ_PLATFORM_DEFINES})
 # ==================================================================================================
 # Linker
 # ==================================================================================================
+if (QUARTZ_HAS_WEBAUDIO)
+	target_link_options(${TARGET} PUBLIC "-sAUDIO_WORKLET")
+	target_link_options(${TARGET} PUBLIC "-sWASM_WORKERS")
+	target_link_options(${TARGET} PUBLIC "-sASYNCIFY")
+endif()
 
 # ==================================================================================================
 # Libraries

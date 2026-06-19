@@ -110,6 +110,7 @@ Quartz_Result quartzCreateInstance(Quartz_Api api, const Quartz_InstanceDesc *de
 	{
 		case QUARTZ_API_WASAPI: return wasapi_quartzCreateInstance(desc, instance);
 		case QUARTZ_API_DIRECTSOUND: return directsound_quartzCreateInstance(desc, instance);
+		case QUARTZ_API_WEBAUDIO: return webaudio_quartzCreateInstance(desc, instance);
 		case QUARTZ_API_NULL: return null_quartzCreateInstance(desc, instance);
 
 		case QUARTZ_API_AUTO:
@@ -124,6 +125,11 @@ Quartz_Result quartzCreateInstance(Quartz_Api api, const Quartz_InstanceDesc *de
 #if QUARTZ_BACKEND_DIRECTSOUND
 			if (result != QUARTZ_SUCCESS)
 				result = directsound_quartzCreateInstance(desc, instance);
+#endif
+
+#if QUARTZ_BACKEND_WEBAUDIO
+			if (result != QUARTZ_SUCCESS)
+				result = webaudio_quartzCreateInstance(desc, instance);
 #endif
 
 			return result;

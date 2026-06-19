@@ -25,3 +25,15 @@ Quartz_Result directsound_quartzCreateInstance(const Quartz_InstanceDesc *desc, 
 }
 
 #endif
+
+#if !defined(QUARTZ_BACKEND_WEBAUDIO)
+
+Quartz_Result webaudio_quartzCreateInstance(const Quartz_InstanceDesc *desc, Quartz_Instance *instance)
+{
+	QUARTZ_UNUSED(desc);
+	QUARTZ_UNUSED(instance);
+
+	return QUARTZ_NOT_SUPPORTED;
+}
+
+#endif

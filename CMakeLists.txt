@@ -7,6 +7,7 @@ project(quartz VERSION 1.0.0)
 option(QUARTZ_BUILD_SAMPLES "Build samples" TRUE)
 option(QUARTZ_BUILD_WITH_WASAPI "Build with WASAPI backend" TRUE)
 option(QUARTZ_BUILD_WITH_DIRECTSOUND "Build with Direct Sound backend" TRUE)
+option(QUARTZ_BUILD_WITH_WEBAUDIO "Build with WebAudio backend" TRUE)
 
 # ==================================================================================================
 # Global Variables
