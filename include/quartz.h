@@ -64,6 +64,9 @@ typedef enum Quartz_Result_t
 	// FIXME: add more error codes for wasapi stuff
 	QUARTZ_WASAPI_ERROR,
 
+	// FIXME: add more error codes for webaudio stuff
+	QUARTZ_WEBAUDIO_ERROR,
+
 	QUARTZ_RESULT_ENUM_MAX,
 	QUARTZ_RESULT_ENUM_FORCE32 = 0x7FFFFFFF,
 } Quartz_Result;

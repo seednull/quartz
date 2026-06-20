@@ -4,31 +4,222 @@
 #include <stdlib.h>
 #include <string.h>
 
+EM_JS(int, webaudio_createJavascriptDevice, (const char *id, int size),
+{
+	assert(id);
+	assert(Module);
+	
+	const options = {
+		sinkId: UTF8ToString(id, size)
+	};
+
+	const audio = new AudioContext(options);
+	const device = {
+		audio: audio,
+	};
+
+	const newId = Module.quartz.deviceCounter++;
+	Module.quartz.devices.set(newId, device);
+	return newId;
+});
+
+EM_ASYNC_JS(int, webaudio_getDefaultDeviceInfoSync, (Quartz_DeviceType type, WebAudio_DeviceInfo *info),
+{
+	assert(info);
+	const kind = (type === 0) ? "audiooutput" : "audioinput";
+
+	if (!navigator || !navigator.mediaDevices)
+		return -1;
+
+	try
+	{
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		const reduced = devices.filter(d => d.kind === kind);
+
+		let index = 0;
+		
+		if (reduced.length > 1)
+			index = reduced.findIndex(d => d.deviceId === "default");
+
+		if (index < 0 || index >= reduced.length)
+			return -2;
+
+		stringToUTF8(reduced[index].deviceId, info, 256);
+		stringToUTF8(reduced[index].label, info + 256, 256);
+		return index;
+	}
+	catch (e)
+	{
+		return -1;
+	}
+});
+
+EM_ASYNC_JS(int, webaudio_getDeviceInfoSync, (Quartz_DeviceType type, int index, WebAudio_DeviceInfo *info),
+{
+	assert(info);
+	const kind = (type === 0) ? "audiooutput" : "audioinput";
+
+	if (!navigator || !navigator.mediaDevices)
+		return -1;
+
+	try
+	{
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		const reduced = devices.filter(d => d.kind === kind);
+
+		if (index < 0 || index >= reduced.length)
+			return -2;
+
+		stringToUTF8(reduced[index].deviceId, info, 256);
+		stringToUTF8(reduced[index].label, info + 256, 256);
+		return index;
+	}
+	catch (e)
+	{
+		console.log(e);
+		return -1;
+	}
+});
+
+EM_ASYNC_JS(int, webaudio_enumerateDevicesSync, (Quartz_DeviceType type, Quartz_DeviceInfo *infos, int stride),
+{
+	const kind = (type === 0) ? "audiooutput" : "audioinput";
+
+	if (!navigator || !navigator.mediaDevices)
+		return -1;
+
+	try
+	{
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		const reduced = devices.filter(d => d.kind === kind);
+
+		if (infos)
+		{
+			for (var i = 0; i < reduced.length; ++i)
+			{
+				const device = reduced[i];
+				const dst = infos + stride * i;
+				stringToUTF8(device.label, dst, 256);
+			}
+		}
+		return reduced.length;
+	}
+	catch (e)
+	{
+		return -1;
+	}
+});
+
+static Quartz_Result webaudio_initialize()
+{
+	static int once = 0;
+
+	if (!once)
+	{
+		EM_ASM(
+		{
+			assert(Module);
+
+			Module.quartz = {};
+			Module.quartz.deviceCounter = 0;
+			Module.quartz.devices = new Map();
+		});
+
+		once = 1;
+	}
+
+	return QUARTZ_SUCCESS;
+}
+
 /*
  */
 static Quartz_Result webaudio_instanceEnumerateDevices(Quartz_Instance this, Quartz_DeviceType type, uint32_t *device_count, Quartz_DeviceInfo *infos)
 {
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(type);
-	QUARTZ_UNUSED(device_count);
-	QUARTZ_UNUSED(infos);
+	assert(this);
+	assert(device_count);
 
-	return QUARTZ_NOT_SUPPORTED;
+	QUARTZ_UNUSED(this);
+
+	int result = webaudio_enumerateDevicesSync(type, infos, sizeof(Quartz_DeviceInfo));
+	if (result < 0)
+		return QUARTZ_WEBAUDIO_ERROR;
+
+	if (infos)
+	{
+		for (int i = 0; i < result; ++i)
+		{
+			Quartz_DeviceInfo *info = &infos[i];
+			info->api = QUARTZ_API_WASAPI;
+			info->type = type;
+		}
+	}
+
+	*device_count = result;
+	return QUARTZ_SUCCESS;
 }
 
 static Quartz_Result webaudio_instanceCreateDevice(Quartz_Instance this, Quartz_DeviceType type, uint32_t index, Quartz_Device *device)
 {
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(type);
-	QUARTZ_UNUSED(index);
-	QUARTZ_UNUSED(device);
+	assert(this);
+	assert(device);
 
-	return QUARTZ_NOT_SUPPORTED;
+	WebAudio_Instance *instance_ptr = (WebAudio_Instance *)this;
+	WebAudio_DeviceInfo webaudio_info = {0};
+
+	int result = webaudio_getDeviceInfoSync(type, index, &webaudio_info);
+	if (result == -1)
+		return QUARTZ_WEBAUDIO_ERROR;
+
+	if (result == -2)
+		return QUARTZ_INVALID_DEVICE_INDEX;
+
+	assert((uint32_t)result == index);
+
+	uint32_t id = (uint32_t)webaudio_createJavascriptDevice(webaudio_info.id, 256);
+
+	WebAudio_Device *device_ptr = (WebAudio_Device *)malloc(sizeof(WebAudio_Device));
+	assert(device_ptr);
+
+	Quartz_Result quartz_result = webaudio_deviceInitialize(device_ptr, instance_ptr, type, &webaudio_info, id);
+	if (quartz_result != QUARTZ_SUCCESS)
+	{
+		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
+		return quartz_result;
+	}
+
+	*device = (Quartz_Device)device_ptr;
+	return QUARTZ_SUCCESS;
 }
 
 static Quartz_Result webaudio_instanceCreateDefaultDevice(Quartz_Instance this, Quartz_DeviceType type, Quartz_Device *device)
 {
-	return webaudio_instanceCreateDevice(this, type, 0, device);
+	assert(this);
+	assert(device);
+
+	WebAudio_Instance *instance_ptr = (WebAudio_Instance *)this;
+	WebAudio_DeviceInfo webaudio_info = {0};
+
+	int result = webaudio_getDefaultDeviceInfoSync(type, &webaudio_info);
+	if (result == -1)
+		return QUARTZ_WEBAUDIO_ERROR;
+
+	if (result == -2)
+		return QUARTZ_INVALID_DEVICE_INDEX;
+
+	uint32_t id = (uint32_t)webaudio_createJavascriptDevice(webaudio_info.id, 256);
+
+	WebAudio_Device *device_ptr = (WebAudio_Device *)malloc(sizeof(WebAudio_Device));
+	assert(device_ptr);
+
+	Quartz_Result quartz_result = webaudio_deviceInitialize(device_ptr, instance_ptr, type, &webaudio_info, id);
+	if (quartz_result != QUARTZ_SUCCESS)
+	{
+		device_ptr->vtbl->destroyDevice((Quartz_Device)device_ptr);
+		return quartz_result;
+	}
+
+	*device = (Quartz_Device)device_ptr;
+	return QUARTZ_SUCCESS;
 }
 
 static Quartz_Result webaudio_instanceDestroy(Quartz_Instance this)
@@ -58,6 +249,10 @@ Quartz_Result webaudio_quartzCreateInstance(const Quartz_InstanceDesc *desc, Qua
 	assert(instance);
 
 	QUARTZ_UNUSED(desc);
+
+	Quartz_Result quartz_result = webaudio_initialize();
+	if (quartz_result != QUARTZ_SUCCESS)
+		return quartz_result;
 
 	WebAudio_Instance *ptr = (WebAudio_Instance *)malloc(sizeof(WebAudio_Instance));
 	assert(ptr);

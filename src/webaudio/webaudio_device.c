@@ -4,6 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+EM_JS(void, webaudio_destroyJavascriptDevice, (int id),
+{
+	assert(Module);
+	assert(Module.quartz.devices.has(id));
+	Module.quartz.devices.delete(id);
+});
+
 /*
  */
 static void webaudio_destroyBuffer(WebAudio_Device *device_ptr, WebAudio_Buffer *buffer_ptr)
@@ -16,10 +23,16 @@ static void webaudio_destroyBuffer(WebAudio_Device *device_ptr, WebAudio_Buffer 
  */
 static Quartz_Result webaudio_deviceGetInfo(Quartz_Device this, Quartz_DeviceInfo *info)
 {
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(info);
+	assert(this);
+	assert(info);
 
-	return QUARTZ_NOT_SUPPORTED;
+	WebAudio_Device *device_ptr = (WebAudio_Device *)this;
+
+	info->api = QUARTZ_API_WEBAUDIO;
+	info->type = device_ptr->type;
+	memcpy(&info->name[0], device_ptr->info.label, 256);
+
+	return QUARTZ_SUCCESS;
 }
 
 static Quartz_Result webaudio_deviceGetPreferredFormat(Quartz_Device this, Quartz_DeviceFormat *format)
@@ -98,6 +111,8 @@ static Quartz_Result webaudio_deviceDestroy(Quartz_Device this)
 
 		quartz_poolShutdown(&ptr->buffers);
 	}
+
+	webaudio_destroyJavascriptDevice(ptr->id);
 
 	free(ptr);
 	return QUARTZ_SUCCESS;
@@ -183,10 +198,11 @@ static Quartz_DeviceTable device_vtbl =
 
 /*
  */
-Quartz_Result webaudio_deviceInitialize(WebAudio_Device *device_ptr, WebAudio_Instance *instance_ptr, Quartz_DeviceType type)
+Quartz_Result webaudio_deviceInitialize(WebAudio_Device *device_ptr, WebAudio_Instance *instance_ptr, Quartz_DeviceType type, const WebAudio_DeviceInfo *info, uint32_t id)
 {
 	assert(instance_ptr);
 	assert(device_ptr);
+	assert(info);
 
 	QUARTZ_UNUSED(instance_ptr);
 
@@ -195,6 +211,8 @@ Quartz_Result webaudio_deviceInitialize(WebAudio_Device *device_ptr, WebAudio_In
 
 	// data
 	device_ptr->type = type;
+	device_ptr->id = id;
+	memcpy(&device_ptr->info, info, sizeof(WebAudio_DeviceInfo));
 
 	// pools
 	quartz_poolInitialize(&device_ptr->buffers, sizeof(WebAudio_Buffer), 32);
