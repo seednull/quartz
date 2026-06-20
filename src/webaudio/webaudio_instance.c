@@ -4,19 +4,50 @@
 #include <stdlib.h>
 #include <string.h>
 
-EM_JS(int, webaudio_createJavascriptDevice, (const char *id, int size),
+QUARTZ_DEFINE_JS_SOURCE(quartz_processor,
+	class QuartzProcessor extends AudioWorkletProcessor {
+		constructor()
+		{
+			super();
+		}
+
+		process(inputs, outputs)
+		{
+			return true;
+		}
+	}
+
+	registerProcessor("quartz-processor", QuartzProcessor);
+);
+
+EM_ASYNC_JS(int, webaudio_createJavascriptDevice, (const char *id, int id_size, const char *processor_source, int processor_source_size),
 {
 	assert(id);
 	assert(Module);
 	
 	const options = {
-		sinkId: UTF8ToString(id, size)
+		sinkId: UTF8ToString(id, id_size)
 	};
 
-	const audio = new AudioContext(options);
-	const device = {
-		audio: audio,
-	};
+	const processorSource = UTF8ToString(processor_source, processor_source_size);
+	const blob = new Blob([processorSource], { type: "text/javascript" });
+	const url = URL.createObjectURL(blob);
+
+	const device = {};
+
+	try
+	{
+		device.audio = new AudioContext(options);
+		await device.audio.audioWorklet.addModule(url);
+	}
+	catch (e)
+	{
+		return -1;
+	}
+	finally
+	{
+		URL.revokeObjectURL(url);
+	}
 
 	const newId = Module.quartz.deviceCounter++;
 	Module.quartz.devices.set(newId, device);
@@ -175,11 +206,14 @@ static Quartz_Result webaudio_instanceCreateDevice(Quartz_Instance this, Quartz_
 
 	assert((uint32_t)result == index);
 
-	uint32_t id = (uint32_t)webaudio_createJavascriptDevice(webaudio_info.id, 256);
+	int javascript_result = webaudio_createJavascriptDevice(webaudio_info.id, 256, quartz_processor, quartz_processor_size);
+	if (javascript_result < 0)
+		return QUARTZ_WEBAUDIO_ERROR;
 
 	WebAudio_Device *device_ptr = (WebAudio_Device *)malloc(sizeof(WebAudio_Device));
 	assert(device_ptr);
 
+	uint32_t id = (uint32_t)javascript_result;
 	Quartz_Result quartz_result = webaudio_deviceInitialize(device_ptr, instance_ptr, type, &webaudio_info, id);
 	if (quartz_result != QUARTZ_SUCCESS)
 	{
@@ -206,11 +240,14 @@ static Quartz_Result webaudio_instanceCreateDefaultDevice(Quartz_Instance this, 
 	if (result == -2)
 		return QUARTZ_INVALID_DEVICE_INDEX;
 
-	uint32_t id = (uint32_t)webaudio_createJavascriptDevice(webaudio_info.id, 256);
+	int javascript_result = webaudio_createJavascriptDevice(webaudio_info.id, 256, quartz_processor, quartz_processor_size);
+	if (javascript_result < 0)
+		return QUARTZ_WEBAUDIO_ERROR;
 
 	WebAudio_Device *device_ptr = (WebAudio_Device *)malloc(sizeof(WebAudio_Device));
 	assert(device_ptr);
 
+	uint32_t id = (uint32_t)javascript_result;
 	Quartz_Result quartz_result = webaudio_deviceInitialize(device_ptr, instance_ptr, type, &webaudio_info, id);
 	if (quartz_result != QUARTZ_SUCCESS)
 	{

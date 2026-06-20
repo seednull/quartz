@@ -5,6 +5,10 @@
 
 #include <emscripten/webaudio.h>
 
+#define QUARTZ_DEFINE_JS_SOURCE(name, ...) \
+	static const char name[] = #__VA_ARGS__; \
+	static const size_t name##_size = sizeof(name);
+
 typedef struct WebAudio_DeviceInfo_t
 {
 	char id[256];
