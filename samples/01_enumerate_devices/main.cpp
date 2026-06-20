@@ -80,7 +80,7 @@ int main()
 		0,
 	};
 
-	Quartz_Result result = quartzCreateInstance(QUARTZ_API_WASAPI, &instance_desc, &instance);
+	Quartz_Result result = quartzCreateInstance(QUARTZ_API_AUTO, &instance_desc, &instance);
 	assert(result == QUARTZ_SUCCESS);
 
 	Quartz_DeviceType types[] =
