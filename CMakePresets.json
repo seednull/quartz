@@ -2,6 +2,20 @@
     "version": 8,
     "configurePresets": [
         {
+            "name": "msvc2026-common",
+            "hidden": true,
+            "generator": "Visual Studio 18 2026",
+            "binaryDir": "${workspaceFolder}/build",
+            "installDir": "${workspaceFolder}/build"
+        },
+        {
+            "name": "msvc2026-x64",
+            "inherits": "msvc2026-common",
+            "hidden": false,
+            "architecture": "x64",
+            "displayName": "Visual Studio 2026 | x64"
+        },
+        {
             "name": "msvc2022-common",
             "hidden": true,
             "generator": "Visual Studio 17 2022",
@@ -26,14 +40,28 @@
     ],
     "buildPresets": [
         {
-            "name": "build-windows-debug",
+            "name": "build-vs2026-windows-debug",
+            "hidden": false,
+            "configurePreset": "msvc2026-x64",
+            "configuration": "Debug",
+            "targets": ["all_build", "install"]
+        },
+        {
+            "name": "build-vs2026-windows-release",
+            "hidden": false,
+            "configurePreset": "msvc2026-x64",
+            "configuration": "Release",
+            "targets": ["all_build", "install"]
+        },
+        {
+            "name": "build-vs2022-windows-debug",
             "hidden": false,
             "configurePreset": "msvc2022-x64",
             "configuration": "Debug",
             "targets": ["all_build", "install"]
         },
         {
-            "name": "build-windows-release",
+            "name": "build-vs2022-windows-release",
             "hidden": false,
             "configurePreset": "msvc2022-x64",
             "configuration": "Release",
