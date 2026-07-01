@@ -112,7 +112,7 @@ EM_ASYNC_JS(int, js_webaudio_getDeviceInfo, (Quartz_DeviceType type, int index, 
 	}
 });
 
-EM_ASYNC_JS(int, js_webaudio_enumerateDevicesSync, (Quartz_DeviceType type, Quartz_DeviceInfo *infos, int stride),
+EM_ASYNC_JS(int, js_webaudio_enumerateDevices, (Quartz_DeviceType type, Quartz_DeviceInfo *infos, int stride),
 {
 	const kind = (type === 0) ? "audiooutput" : "audioinput";
 
@@ -171,7 +171,7 @@ static Quartz_Result webaudio_instanceEnumerateDevices(Quartz_Instance this, Qua
 
 	QUARTZ_UNUSED(this);
 
-	int result = js_webaudio_enumerateDevicesSync(type, infos, sizeof(Quartz_DeviceInfo));
+	int result = js_webaudio_enumerateDevices(type, infos, sizeof(Quartz_DeviceInfo));
 	if (result < 0)
 		return QUARTZ_WEBAUDIO_ERROR;
 
