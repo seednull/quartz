@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-QUARTZ_DEFINE_JS_SOURCE(quartz_processor,
+QUARTZ_DEFINE_JS_SOURCE(js_webaudio_processor,
 	class QuartzProcessor extends AudioWorkletProcessor {
 		constructor()
 		{
@@ -20,7 +20,7 @@ QUARTZ_DEFINE_JS_SOURCE(quartz_processor,
 	registerProcessor("quartz-processor", QuartzProcessor);
 );
 
-EM_ASYNC_JS(int, webaudio_createJavascriptDevice, (const char *id, int id_size, const char *processor_source, int processor_source_size),
+EM_ASYNC_JS(int, js_webaudio_createDevice, (const char *id, int id_size, const char *processor_source, int processor_source_size),
 {
 	assert(id);
 	assert(Module);
@@ -112,7 +112,7 @@ EM_ASYNC_JS(int, webaudio_getDeviceInfoSync, (Quartz_DeviceType type, int index,
 	}
 });
 
-EM_ASYNC_JS(int, webaudio_enumerateDevicesSync, (Quartz_DeviceType type, Quartz_DeviceInfo *infos, int stride),
+EM_ASYNC_JS(int, js_webaudio_enumerateDevicesSync, (Quartz_DeviceType type, Quartz_DeviceInfo *infos, int stride),
 {
 	const kind = (type === 0) ? "audiooutput" : "audioinput";
 
@@ -171,7 +171,7 @@ static Quartz_Result webaudio_instanceEnumerateDevices(Quartz_Instance this, Qua
 
 	QUARTZ_UNUSED(this);
 
-	int result = webaudio_enumerateDevicesSync(type, infos, sizeof(Quartz_DeviceInfo));
+	int result = js_webaudio_enumerateDevicesSync(type, infos, sizeof(Quartz_DeviceInfo));
 	if (result < 0)
 		return QUARTZ_WEBAUDIO_ERROR;
 
@@ -206,7 +206,7 @@ static Quartz_Result webaudio_instanceCreateDevice(Quartz_Instance this, Quartz_
 
 	assert((uint32_t)result == index);
 
-	int javascript_result = webaudio_createJavascriptDevice(webaudio_info.id, 256, quartz_processor, quartz_processor_size);
+	int javascript_result = js_webaudio_createDevice(webaudio_info.id, 256, js_webaudio_processor, js_webaudio_processor_size);
 	if (javascript_result < 0)
 		return QUARTZ_WEBAUDIO_ERROR;
 
@@ -240,7 +240,7 @@ static Quartz_Result webaudio_instanceCreateDefaultDevice(Quartz_Instance this, 
 	if (result == -2)
 		return QUARTZ_INVALID_DEVICE_INDEX;
 
-	int javascript_result = webaudio_createJavascriptDevice(webaudio_info.id, 256, quartz_processor, quartz_processor_size);
+	int javascript_result = js_webaudio_createDevice(webaudio_info.id, 256, js_webaudio_processor, js_webaudio_processor_size);
 	if (javascript_result < 0)
 		return QUARTZ_WEBAUDIO_ERROR;
 

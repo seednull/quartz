@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-EM_JS(void, webaudio_destroyJavascriptDevice, (int id),
+EM_JS(void, js_webaudio_destroyDevice, (int id),
 {
 	assert(Module);
 	assert(Module.quartz.devices.has(id));
@@ -112,7 +112,7 @@ static Quartz_Result webaudio_deviceDestroy(Quartz_Device this)
 		quartz_poolShutdown(&ptr->buffers);
 	}
 
-	webaudio_destroyJavascriptDevice(ptr->id);
+	js_webaudio_destroyDevice(ptr->id);
 
 	free(ptr);
 	return QUARTZ_SUCCESS;
