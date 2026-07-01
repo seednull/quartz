@@ -54,7 +54,7 @@ EM_ASYNC_JS(int, js_webaudio_createDevice, (const char *id, int id_size, const c
 	return newId;
 });
 
-EM_ASYNC_JS(int, webaudio_getDefaultDeviceInfoSync, (Quartz_DeviceType type, WebAudio_DeviceInfo *info),
+EM_ASYNC_JS(int, js_webaudio_getDefaultDeviceInfo, (Quartz_DeviceType type, WebAudio_DeviceInfo *info),
 {
 	assert(info);
 	const kind = (type === 0) ? "audiooutput" : "audioinput";
@@ -85,7 +85,7 @@ EM_ASYNC_JS(int, webaudio_getDefaultDeviceInfoSync, (Quartz_DeviceType type, Web
 	}
 });
 
-EM_ASYNC_JS(int, webaudio_getDeviceInfoSync, (Quartz_DeviceType type, int index, WebAudio_DeviceInfo *info),
+EM_ASYNC_JS(int, js_webaudio_getDeviceInfo, (Quartz_DeviceType type, int index, WebAudio_DeviceInfo *info),
 {
 	assert(info);
 	const kind = (type === 0) ? "audiooutput" : "audioinput";
@@ -197,7 +197,7 @@ static Quartz_Result webaudio_instanceCreateDevice(Quartz_Instance this, Quartz_
 	WebAudio_Instance *instance_ptr = (WebAudio_Instance *)this;
 	WebAudio_DeviceInfo webaudio_info = {0};
 
-	int result = webaudio_getDeviceInfoSync(type, index, &webaudio_info);
+	int result = js_webaudio_getDeviceInfo(type, index, &webaudio_info);
 	if (result == -1)
 		return QUARTZ_WEBAUDIO_ERROR;
 
@@ -233,7 +233,7 @@ static Quartz_Result webaudio_instanceCreateDefaultDevice(Quartz_Instance this, 
 	WebAudio_Instance *instance_ptr = (WebAudio_Instance *)this;
 	WebAudio_DeviceInfo webaudio_info = {0};
 
-	int result = webaudio_getDefaultDeviceInfoSync(type, &webaudio_info);
+	int result = js_webaudio_getDefaultDeviceInfo(type, &webaudio_info);
 	if (result == -1)
 		return QUARTZ_WEBAUDIO_ERROR;
 
