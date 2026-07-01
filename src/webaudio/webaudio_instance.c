@@ -180,7 +180,7 @@ static Quartz_Result webaudio_instanceEnumerateDevices(Quartz_Instance this, Qua
 		for (int i = 0; i < result; ++i)
 		{
 			Quartz_DeviceInfo *info = &infos[i];
-			info->api = QUARTZ_API_WASAPI;
+			info->api = QUARTZ_API_WEBAUDIO;
 			info->type = type;
 		}
 	}
