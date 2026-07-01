@@ -43,15 +43,6 @@ static Quartz_Result webaudio_deviceGetPreferredFormat(Quartz_Device this, Quart
 	return QUARTZ_NOT_SUPPORTED;
 }
 
-static Quartz_Result webaudio_deviceGetCommonFormats(Quartz_Device this, uint32_t *format_count, Quartz_DeviceFormat *formats)
-{
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(format_count);
-	QUARTZ_UNUSED(formats);
-
-	return QUARTZ_NOT_SUPPORTED;
-}
-
 static Quartz_Result webaudio_deviceCheckFormatSupport(Quartz_Device this, const Quartz_DeviceFormat *format, uint32_t *supported)
 {
 	QUARTZ_UNUSED(this);
@@ -180,7 +171,6 @@ static Quartz_DeviceTable device_vtbl =
 {
 	webaudio_deviceGetInfo,
 	webaudio_deviceGetPreferredFormat,
-	webaudio_deviceGetCommonFormats,
 	webaudio_deviceCheckFormatSupport,
 
 	webaudio_deviceCreateBuffer,

@@ -247,18 +247,6 @@ Quartz_Result quartzGetPreferredFormat(Quartz_Device device, Quartz_DeviceFormat
 	return ptr->vtbl->getPreferredFormat(device, format);
 }
 
-Quartz_Result quartzGetCommonFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats)
-{
-	if (device == QUARTZ_NULL_HANDLE)
-		return QUARTZ_INVALID_DEVICE;
-
-	Quartz_DeviceInternal *ptr = (Quartz_DeviceInternal *)(device);
-	assert(ptr->vtbl);
-	assert(ptr->vtbl->getCommonFormats);
-
-	return ptr->vtbl->getCommonFormats(device, format_count, formats);
-}
-
 Quartz_Result quartzCheckFormatSupport(Quartz_Device device, const Quartz_DeviceFormat *format, uint32_t *supported)
 {
 	if (device == QUARTZ_NULL_HANDLE)

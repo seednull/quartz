@@ -229,7 +229,6 @@ typedef Quartz_Result (*PFN_quartzDestroyInstance)(Quartz_Instance instance);
 
 typedef Quartz_Result (*PFN_quartzGetDeviceInfo)(Quartz_Device device, Quartz_DeviceInfo *info);
 typedef Quartz_Result (*PFN_quartzGetPreferredFormat)(Quartz_Device device, Quartz_DeviceFormat *format);
-typedef Quartz_Result (*PFN_quartzGetCommonFormats)(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
 typedef Quartz_Result (*PFN_quartzCheckFormatSupport)(Quartz_Device device, const Quartz_DeviceFormat *format, uint32_t *supported);
 
 typedef Quartz_Result (*PFN_quartzCreateBuffer)(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);
@@ -269,7 +268,6 @@ typedef struct Quartz_DeviceTable_t
 {
 	PFN_quartzGetDeviceInfo getDeviceInfo;
 	PFN_quartzGetPreferredFormat getPreferredFormat;
-	PFN_quartzGetCommonFormats getCommonFormats;
 	PFN_quartzCheckFormatSupport checkFormatSupport;
 
 	PFN_quartzCreateBuffer createBuffer;
@@ -309,7 +307,6 @@ QUARTZ_APIENTRY Quartz_Result quartzDestroyInstance(Quartz_Instance instance);
 
 QUARTZ_APIENTRY Quartz_Result quartzGetDeviceInfo(Quartz_Device device, Quartz_DeviceInfo *info);
 QUARTZ_APIENTRY Quartz_Result quartzGetPreferredFormat(Quartz_Device device, Quartz_DeviceFormat *format);
-QUARTZ_APIENTRY Quartz_Result quartzGetCommonFormats(Quartz_Device device, uint32_t *format_count, Quartz_DeviceFormat *formats);
 QUARTZ_APIENTRY Quartz_Result quartzCheckFormatSupport(Quartz_Device device, const Quartz_DeviceFormat *format, uint32_t *supported);
 
 QUARTZ_APIENTRY Quartz_Result quartzCreateBuffer(Quartz_Device device, const Quartz_BufferDesc *desc, Quartz_Buffer *buffer);

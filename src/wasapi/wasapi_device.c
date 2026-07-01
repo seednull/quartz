@@ -59,15 +59,6 @@ static Quartz_Result wasapi_deviceGetPreferredFormat(Quartz_Device this, Quartz_
 	return QUARTZ_SUCCESS;
 }
 
-static Quartz_Result wasapi_deviceGetCommonFormats(Quartz_Device this, uint32_t *format_count, Quartz_DeviceFormat *formats)
-{
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(format_count);
-	QUARTZ_UNUSED(formats);
-
-	return QUARTZ_NOT_SUPPORTED;
-}
-
 static Quartz_Result wasapi_deviceCheckFormatSupport(Quartz_Device this, const Quartz_DeviceFormat *format, uint32_t *supported)
 {
 	assert(this);
@@ -371,7 +362,6 @@ static Quartz_DeviceTable device_vtbl =
 {
 	wasapi_deviceGetInfo,
 	wasapi_deviceGetPreferredFormat,
-	wasapi_deviceGetCommonFormats,
 	wasapi_deviceCheckFormatSupport,
 
 	wasapi_deviceCreateBuffer,
