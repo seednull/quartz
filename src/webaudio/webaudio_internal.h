@@ -26,6 +26,8 @@ typedef struct WebAudio_Device_t
 	Quartz_DeviceType type;
 	WebAudio_DeviceInfo info;
 	uint32_t id;
+	uint32_t sample_rate;
+	uint32_t channel_count;
 	Quartz_Pool buffers;
 } WebAudio_Device;
 

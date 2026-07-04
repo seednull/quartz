@@ -11,12 +11,76 @@ EM_JS(void, js_webaudio_destroyDevice, (int id),
 	Module.quartz.devices.delete(id);
 });
 
+EM_JS(int, js_webaudio_deviceGetSampleRate, (int id),
+{
+	assert(Module);
+	assert(Module.quartz.devices.has(id));
+
+	const device = Module.quartz.devices.get(id);
+	assert(device.audio);
+
+	return device.audio.sampleRate;
+});
+
+EM_JS(int, js_webaudio_deviceGetChannelCount, (int id),
+{
+	assert(Module);
+	assert(Module.quartz.devices.has(id));
+
+	const device = Module.quartz.devices.get(id);
+	assert(device.audio);
+	assert(device.audio.destination);
+
+	return device.audio.destination.channelCount;
+});
+
 /*
  */
 static void webaudio_destroyBuffer(WebAudio_Device *device_ptr, WebAudio_Buffer *buffer_ptr)
 {
 	QUARTZ_UNUSED(device_ptr);
 	QUARTZ_UNUSED(buffer_ptr);
+}
+
+static const Quartz_ChannelMapping *webaudio_getChannelMappings(uint32_t channel_count)
+{
+	static const Quartz_ChannelMapping mono[] =
+	{
+		QUARTZ_CHANNEL_MAPPING_FRONT_CENTER,
+	};
+
+	static const Quartz_ChannelMapping stereo[] =
+	{
+		QUARTZ_CHANNEL_MAPPING_FRONT_LEFT,
+		QUARTZ_CHANNEL_MAPPING_FRONT_RIGHT,
+	};
+
+	static const Quartz_ChannelMapping quad[] =
+	{
+		QUARTZ_CHANNEL_MAPPING_FRONT_LEFT,
+		QUARTZ_CHANNEL_MAPPING_FRONT_RIGHT,
+		QUARTZ_CHANNEL_MAPPING_BACK_LEFT,
+		QUARTZ_CHANNEL_MAPPING_BACK_RIGHT,
+	};
+
+	static const Quartz_ChannelMapping surround_5_1[] =
+	{
+		QUARTZ_CHANNEL_MAPPING_FRONT_LEFT,
+		QUARTZ_CHANNEL_MAPPING_FRONT_RIGHT,
+		QUARTZ_CHANNEL_MAPPING_FRONT_CENTER,
+		QUARTZ_CHANNEL_MAPPING_LFE,
+		QUARTZ_CHANNEL_MAPPING_BACK_LEFT,
+		QUARTZ_CHANNEL_MAPPING_BACK_RIGHT,
+	};
+
+	switch (channel_count)
+	{
+		case 1: return mono;
+		case 2: return stereo;
+		case 4: return quad;
+		case 6: return surround_5_1;
+		default: return NULL;
+	}
 }
 
 /*
@@ -37,19 +101,55 @@ static Quartz_Result webaudio_deviceGetInfo(Quartz_Device this, Quartz_DeviceInf
 
 static Quartz_Result webaudio_deviceGetPreferredFormat(Quartz_Device this, Quartz_DeviceFormat *format)
 {
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(format);
+	assert(this);
+	assert(format);
 
-	return QUARTZ_NOT_SUPPORTED;
+	WebAudio_Device *device_ptr = (WebAudio_Device *)this;
+
+	const Quartz_ChannelMapping *device_channel_mappings = webaudio_getChannelMappings(device_ptr->channel_count);
+	if (!device_channel_mappings)
+		return QUARTZ_WEBAUDIO_ERROR;
+
+	memset(format, 0, sizeof(Quartz_DeviceFormat));
+	memcpy(format->channel_mappings, device_channel_mappings, sizeof(Quartz_ChannelMapping) * device_ptr->channel_count);
+	format->sample_rate = device_ptr->sample_rate;
+	format->sample_format = QUARTZ_SAMPLE_FORMAT_FLOAT32;
+	format->channel_count = device_ptr->channel_count;
+
+	return QUARTZ_SUCCESS;
 }
 
 static Quartz_Result webaudio_deviceCheckFormatSupport(Quartz_Device this, const Quartz_DeviceFormat *format, uint32_t *supported)
 {
-	QUARTZ_UNUSED(this);
-	QUARTZ_UNUSED(format);
-	QUARTZ_UNUSED(supported);
+	assert(this);
+	assert(format);
+	assert(supported);
 
-	return QUARTZ_NOT_SUPPORTED;
+	WebAudio_Device *device_ptr = (WebAudio_Device *)this;
+
+	const Quartz_ChannelMapping *device_channel_mappings = webaudio_getChannelMappings(device_ptr->channel_count);
+	if (!device_channel_mappings)
+		return QUARTZ_WEBAUDIO_ERROR;
+
+	*supported = 0;
+
+	if (format->sample_rate != device_ptr->sample_rate)
+		return QUARTZ_SUCCESS;
+
+	if (format->sample_format != QUARTZ_SAMPLE_FORMAT_FLOAT32)
+		return QUARTZ_SUCCESS;
+
+	if (format->channel_count != device_ptr->channel_count)
+		return QUARTZ_SUCCESS;
+
+	for (uint32_t i = 0; i < format->channel_count; ++i)
+	{
+		if (format->channel_mappings[i] != device_channel_mappings[i])
+			return QUARTZ_SUCCESS;
+	}
+
+	*supported = 1;
+	return QUARTZ_SUCCESS;
 }
 
 /*
@@ -202,6 +302,8 @@ Quartz_Result webaudio_deviceInitialize(WebAudio_Device *device_ptr, WebAudio_In
 	// data
 	device_ptr->type = type;
 	device_ptr->id = id;
+	device_ptr->sample_rate = js_webaudio_deviceGetSampleRate(id);
+	device_ptr->channel_count = js_webaudio_deviceGetChannelCount(id);
 	memcpy(&device_ptr->info, info, sizeof(WebAudio_DeviceInfo));
 
 	// pools
