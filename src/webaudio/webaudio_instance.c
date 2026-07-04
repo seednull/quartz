@@ -20,15 +20,11 @@ QUARTZ_DEFINE_JS_SOURCE(js_webaudio_processor,
 	registerProcessor("quartz-processor", QuartzProcessor);
 );
 
-EM_ASYNC_JS(int, js_webaudio_createDevice, (const char *id, int id_size, const char *processor_source, int processor_source_size),
+EM_ASYNC_JS(int, js_webaudio_createDevice, (Quartz_DeviceType type, const char *id, int id_size, const char *processor_source, int processor_source_size),
 {
 	assert(id);
 	assert(Module);
 	
-	const options = {
-		sinkId: UTF8ToString(id, id_size)
-	};
-
 	const processorSource = UTF8ToString(processor_source, processor_source_size);
 	const blob = new Blob([processorSource], { type: "text/javascript" });
 	const url = URL.createObjectURL(blob);
@@ -37,6 +33,10 @@ EM_ASYNC_JS(int, js_webaudio_createDevice, (const char *id, int id_size, const c
 
 	try
 	{
+		const options = {};
+		if (type === 0)
+			options.sinkId = UTF8ToString(id, id_size);
+
 		device.audio = new AudioContext(options);
 		await device.audio.audioWorklet.addModule(url);
 	}
@@ -206,7 +206,7 @@ static Quartz_Result webaudio_instanceCreateDevice(Quartz_Instance this, Quartz_
 
 	assert((uint32_t)result == index);
 
-	int javascript_result = js_webaudio_createDevice(webaudio_info.id, 256, js_webaudio_processor, js_webaudio_processor_size);
+	int javascript_result = js_webaudio_createDevice(type, webaudio_info.id, 256, js_webaudio_processor, js_webaudio_processor_size);
 	if (javascript_result < 0)
 		return QUARTZ_WEBAUDIO_ERROR;
 
@@ -240,7 +240,7 @@ static Quartz_Result webaudio_instanceCreateDefaultDevice(Quartz_Instance this, 
 	if (result == -2)
 		return QUARTZ_INVALID_DEVICE_INDEX;
 
-	int javascript_result = js_webaudio_createDevice(webaudio_info.id, 256, js_webaudio_processor, js_webaudio_processor_size);
+	int javascript_result = js_webaudio_createDevice(type, webaudio_info.id, 256, js_webaudio_processor, js_webaudio_processor_size);
 	if (javascript_result < 0)
 		return QUARTZ_WEBAUDIO_ERROR;
 
